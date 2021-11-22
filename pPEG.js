@@ -1,9 +1,11 @@
+/*
+    A pPEG implementation in JavaScript.
+    
+    Zero dependencies, this is the only file you need.
 
-/* TODO
-- eliminate console.log?
-- eliminate exceptions? 
-- test cases
-- operator expr doc and <opex> code
+    MIT License.
+
+    Copyright (C) 2010-2021 Peter Cashin.
 */
 
 pPEG_grammar = `

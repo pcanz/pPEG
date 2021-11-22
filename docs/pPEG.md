@@ -1,6 +1,6 @@
 #   A Portable PEG Parser
 
-A portable Parser Expression Grammar called pPEG makes it easy to use grammar rule specifications in everyday programming, in any programming language. A pPEG grammar can be directly executed as a parser.
+pPEG makes it easy to use grammar rule specifications in everyday programming, in any programming language. A pPEG grammar can be directly executed as a parser.
 
 pPEG defines three things:
 
@@ -18,7 +18,7 @@ pPEG aims to be:
 
 3. Easy to implement in any programming language.
 
-The focus is on simplicity and ease of use, but the performance of a pPEG parser can compete with parser code generators such as ANTLR.
+The focus is on simplicity and ease of use, but the performance of a pPEG parser can compete with parser code generators such as [ANTLR].
 
 The grammar source language is a text string in the host programming language, and the parse tree output is a simple list structure, a subset of JSON.
 
@@ -29,7 +29,7 @@ A pPEG parser can be implemented in less than a thousand lines of code without a
 
 Here are a couple of examples, the first is in JavaScript, the second is in Python, other programming language have similar implementations. These examples should illustrate how easy it is to specify a grammar and use it to parse an input string and generate a parse tree. The details are not important for the moment, they will be explained shortly.
 
-The first grammar is for a CSV (Comma Separated Value) format that is compatible with the [RFC 4180] standard:
+The first grammar is for a CSV (Comma Separated Value) format:
 
     const peg = require("./pPEG.js");
  
@@ -59,7 +59,9 @@ The first grammar is for a CSV (Comma Separated Value) format that is compatible
         ["record",[["text","a3"],["text","b3"],["text","c3"]]]]]
     */
 
-Notice that the grammar only requires six lines of text to specify the CSV format. This grammar compiles directly into a parser, and the resulting parse trees are simple and easy to process, as shown here in JSON format.
+Notice that the grammar only requires six lines of text to specify a CSV format that is compatible with the [RFC 4180] standard.
+
+This grammar compiles directly into a parser, and the resulting parse trees are simple and easy to process, as shown here in JSON format.
 
 An application can translate the CSV parse tree into a data structure for processing, or into an HTML table for presentation, or whatever is required.
 
@@ -210,11 +212,11 @@ A rule name can label an input string that the rule has matched, or the rule nam
 
 There are only two rule result formats:
 
-1. ["rule", "string..."]  for a string matching rule result.
+1. `["rule", "string..."]`  for a string matching rule result.
 
-2. ["rule", [...rule_result]] a rule matching named component rules.
+2. `["rule", [...rule_result]]` a rule matching named component rules.
 
-If a rule contains a mixture of component rules and anonymous literal matches then only the named rule components will appear in the ptree. Anonymous matches such as matching a quoted string, or matching a character in a quoted set of characters will not appear in the parse tree. This is usually what is wanted, but if the anonymous literal matches are required in the ptree then they can always be included by defining them in extra named rules.
+If a rule contains a mixture of component rules and anonymous literal matches then only the named rule components will appear in the ptree. Anonymous matches include matching a quoted string, or matching a character in a set of characters. Anonymous matches will not appear in the parse tree, and that is usually what we want. If an anonymous literal match is required in the ptree then it can always be included by defining it in a named rule.
 
 A rule name that starts with a lower case letter can return a ptree rule result in either format (1) or format (2). There are several cases to consider:
 
@@ -230,7 +232,7 @@ A convention for rule names enables the grammar to explicitly include or exclude
 
 1. A rule name that begins with a capital letter will always appear in the ptree, and will always be in format (2). The list or component rule results may have zero or more elements.
 
-2. A rule name that begins with an underscore will never appear in the ptree. These rule names are treated as if they are literal expression that match a string result.
+2. A rule name that begins with an underscore will never appear in the ptree. These rule names are treated as if they are anonymous expressions.
 
 3. A rule name that begins with a lower case letter should be used by default, and it will return a dynamic result as defined above.
 
@@ -256,11 +258,11 @@ Here is one way to write a grammar for arithmetic expressions:
 
 A separate grammar rule has been defined for each operator in order to demonstrate how pPEG generates minimal ptree results. 
 
-The ptree result parsing: 1+2*3 is:   
+The ptree result parsing: `1+2*3` is:   
 
     ["add",[["num","1"],["mul",[["num","2"],["num","3"]]]]]
 
-Or parsing: x^2^3-1
+Or parsing: `x^2^3-1`
 
     ["sub",[["pow",[["sym","x"],["num","2"],["num","3"]]],["num","1"]]]
 
@@ -287,9 +289,9 @@ To reduce the number of rules each operator rule could match all operators with 
 
 ##  JSON Grammar Example
 
-A pPEG version of the JSON grammar specifications [json] illustrates how upper case rule names and underscore rule names can be used to manicure the ptree.
+A pPEG version of the [JSON] grammar specifications illustrates how upper case rule names and underscore rule names can be used to manicure the ptree.
 
-A pPEG JSON parser is not expected to compete with the high performance JSON parsers that are available in many programming languages, but JSON is a useful example since it widely known and has a well defined grammar. 
+A pPEG JSON parser is a useful example since JSON is so widely known and has a well defined grammar. A pPEG JSON parser is not expected to compete with the specialized high performance JSON parsers that are available for many programming languages.  
 
     json   = " " value " "
     value  = Obj / Arr / Str / num / val
@@ -402,7 +404,9 @@ The pPEG grammar allows custom extensions to cope with any gnarly bits of syntax
 
 pPEG is portable and easy to implement in almost any programming language.
 
+[ANTLR]: https://www.antlr.org
 [RFC 4180]: https://www.ietf.org/rfc/rfc4180.txt
 [PEG]: https://bford.info/pub/lang/peg.pdf
+[JSON]: https://www.json.org/json-en.html
 [Operator Expressions]: TODO
 [The pPEG Machine]: TODO
