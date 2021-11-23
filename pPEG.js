@@ -1,11 +1,11 @@
 /*
-    A pPEG implementation in JavaScript.
-    
-    Zero dependencies, this is the only file you need.
+    pPEG in JavaScript
 
-    MIT License.
+    exports peg.compile(...grammar...)
 
-    Copyright (C) 2010-2021 Peter Cashin.
+    No dependencies, this is the only file you need.
+
+    Peter Cashin
 */
 
 pPEG_grammar = `
@@ -58,7 +58,8 @@ const pPEG_rules =
 ["rule",[["id","sfx"],
     ["alt",[["chs","[+?]"],["seq",[["sq","'*'"],["rep",[["id","range"],["sfx","?"]]]]]]]]],
 ["rule",[["id","range"],
-    ["seq",[["id","num"],["rep",[["seq",[["id","dots"],["rep",[["id","num"],["sfx","?"]]]]],["sfx","?"]]]]]]],
+    ["seq",[["id","num"],["rep",[["seq",[["id","dots"],["rep",[["id","num"],["sfx","?"]]]]],
+        ["sfx","?"]]]]]]],
 ["rule",[["id","num"],
     ["rep",[["chs","[0-9]"],["sfx","+"]]]]],
 ["rule",[["id","dots"],
@@ -66,17 +67,22 @@ const pPEG_rules =
 ["rule",[["id","call"],
     ["seq",[["id","id"],["pre",[["pfx","!"],["dq","\" =\""]]]]]]],
 ["rule",[["id","sq"],
-    ["seq",[["dq","\"'\""],["rep",[["pre",[["pfx","~"],["dq","\"'\""]]],["sfx","*"]]],["dq","\"'\""],["rep",[["sq","'i'"],["sfx","?"]]]]]]],
+    ["seq",[["dq","\"'\""],["rep",[["pre",[["pfx","~"],["dq","\"'\""]]],
+        ["sfx","*"]]],["dq","\"'\""],["rep",[["sq","'i'"],["sfx","?"]]]]]]],
 ["rule",[["id","dq"],
-    ["seq",[["sq","'\"'"],["rep",[["pre",[["pfx","~"],["sq","'\"'"]]],["sfx","*"]]],["sq","'\"'"],["rep",[["sq","'i'"],["sfx","?"]]]]]]],
+    ["seq",[["sq","'\"'"],["rep",[["pre",[["pfx","~"],["sq","'\"'"]]],["sfx","*"]]],
+        ["sq","'\"'"],["rep",[["sq","'i'"],["sfx","?"]]]]]]],
 ["rule",[["id","chs"],
-    ["seq",[["sq","'['"],["rep",[["pre",[["pfx","~"],["sq","']'"]]],["sfx","*"]]],["sq","']'"]]]]],
+    ["seq",[["sq","'['"],["rep",[["pre",[["pfx","~"],["sq","']'"]]],
+        ["sfx","*"]]],["sq","']'"]]]]],
 ["rule",[["id","group"],
     ["seq",[["dq","\"( \""],["id","alt"],["dq","\" )\""]]]]],
 ["rule",[["id","extn"],
-    ["seq",[["sq","'<'"],["rep",[["pre",[["pfx","~"],["sq","'>'"]]],["sfx","*"]]],["sq","'>'"]]]]],
+    ["seq",[["sq","'<'"],["rep",[["pre",[["pfx","~"],["sq","'>'"]]],
+        ["sfx","*"]]],["sq","'>'"]]]]],
 ["rule",[["id","_space_"],
-    ["rep",[["alt",[["seq",[["sq","'#'"],["rep",[["pre",[["pfx","~"],["chs","[\n\r]"]]],["sfx","*"]]]]],["rep",[["chs","[ \t\n\r]"],["sfx","*"]]]]],["sfx","*"]]]]]]
+    ["rep",[["alt",[["seq",[["sq","'#'"],["rep",[["pre",[["pfx","~"],["chs","[\n\r]"]]],
+        ["sfx","*"]]]]],["rep",[["chs","[ \t\n\r]"],["sfx","*"]]]]],["sfx","*"]]]]]]
 ;
 
 const pPEG_codex = compiler(pPEG_rules);
@@ -94,8 +100,10 @@ function ID(exp, env) { // [ID, idx, name]
         throw "grammar error, max depth of recursion exceeded in rules:\n ... "+
             env.rule_names.slice(-6).join(" ");
     }
-    env.rule_names[env.depth] = name;
     env.depth += 1;
+    env.rule_names[env.depth] = name;
+    env.start[env.depth] = start;
+    env.stack[env.depth] = stack;
     const result = expr[0](expr, env);
     env.depth -= 1;
     if (result === false) {
@@ -158,7 +166,7 @@ function SEQ(exp, env) { // [SEQ, min, max, [...exp]]
             if (result === false) {
                 if (env.pos > start && env.pos > env.fault_pos) {
                     env.fault_pos = env.pos; 
-                    env.fault_rule = env.rule_names[env.depth-1];
+                    env.fault_rule = env.rule_names[env.depth];
                     env.fault_exp = exp[3][i];
                 }
                 return (count >= min);
@@ -335,6 +343,7 @@ function EXTN(exp, env) { // [EXTN, "<xxx>"]
 const builtins = {
     "?": trace_trigger,
     "same": same_match,
+    "opex": opex,
 }
 
 function builtin(key) {
@@ -347,6 +356,14 @@ function same_match(exp, env) {
     return true;
 }
 
+function opex(exp, env) {
+    console.log(exp);
+    console.log(env.depth, env.rule_names);
+    const stack = env.stack[env.depth];
+    console.log(env.start, env.stack);
+    console.log(stack, env.tree); //.slice(stack));
+    return true;
+}
 // fault reporting -------------------------------------------------------
 
 function line_report(str, pos, note="") {
@@ -423,7 +440,7 @@ function line_label(n) {
 function trace_trigger(exp, env) {  // <?> extension
     if (env.trace) return true;   // nested <?>
     env.trace = true;
-    env.trace_depth = env.depth-1; // active enter/exit current rule
+    env.trace_depth = env.depth; // active enter/exit current rule
     trace_report("        "+env.rule_names[env.trace_depth]);
     return true;
 }
@@ -572,7 +589,7 @@ function compiler(rules) { // -> { rules, names, code, start, space }
     }
     let start = [ID, 0, first]; // start rule
     let code = [];
-    for (rule of rules) { 
+    for (rule of rules) {
         const [_rule, [[_id, name], exp]] = rule;
         code.push(emit(exp));
     }
@@ -588,8 +605,8 @@ function compiler(rules) { // -> { rules, names, code, start, space }
             case "id": {
                 const name = exp[1],
                     index = names[name];
-                if (!index) throw "Undefined rule: "+name;
-                return [ID, index, name];
+                if (index === undefined) throw "Undefined rule: "+name;
+                return [ID, index, name];                
             }
             case "alt": return [ALT, exp[1].map(emit)];
             case "seq": return [SEQ, 1, 1, exp[1].map(emit)];
@@ -771,6 +788,8 @@ function parse(codex, input, extend, options) {
         max_depth: 100,
         rule_names: [], // dynamic stack
         tree: [], // ptree construction
+        start: [], // for extn
+        stack: [], // for extn
         fault_pos: -1,
         fault_rule: null,
         fault_exp: null,
@@ -816,8 +835,10 @@ function parse(codex, input, extend, options) {
 
 exports.compile = function compile(grammar, extend, options) {
     const peg = parse(pPEG_codex, grammar, {}, options);
+    // console.log(JSON.stringify(peg));
     if (peg[0] === "$error") throw peg[1];
     const codex = compiler(peg[1]);
+    // console.log("codex\n",JSON.stringify(codex));
     const parser = function parser(input, options) {
         return parse(codex, input, extend, options);
     }

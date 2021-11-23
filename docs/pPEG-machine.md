@@ -965,9 +965,9 @@ A pPEG parser machine can be implemented as a small one person project in a few 
 
 [pPEG]: https://github.com/pcanz/pPEG
 [Norvig]: https://norvig.com/lispy.html
-[Machine-1]: TODO
-[Machine-2]: TODO
-[Machine-3]: TODO
-[Machine-4]: TODO
-[Machine-5]: TODO
-[Machine-6]: TODO
+[Machine-1]: https://github.com/pcanz/pPEG/blob/master/samples/machine-1.js
+[Machine-2]: https://github.com/pcanz/pPEG/blob/master/samples/machine-2.js
+[Machine-3]: https://github.com/pcanz/pPEG/blob/master/samples/machine-3.js
+[Machine-4]: https://github.com/pcanz/pPEG/blob/master/samples/machine-4.js
+[Machine-5]: https://github.com/pcanz/pPEG/blob/master/samples/machine-5.js
+[Machine-6]: https://github.com/pcanz/pPEG/blob/master/pPEG.js

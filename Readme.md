@@ -408,5 +408,5 @@ pPEG is portable and easy to implement in almost any programming language.
 [RFC 4180]: https://www.ietf.org/rfc/rfc4180.txt
 [PEG]: https://bford.info/pub/lang/peg.pdf
 [JSON]: https://www.json.org/json-en.html
-[Operator Expressions]: TODO
-[The pPEG Machine]: TODO
+[Operator Expressions]: https://github.com/pcanz/pPEG/blob/master/docs/operator-expressions.md
+[The pPEG Machine]: https://github.com/pcanz/pPEG/blob/master/docs/pPEG-machine.md
