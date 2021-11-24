@@ -105,5 +105,5 @@
         } // switch
     }
 
-    console.log( parse(date_code, "2021-03-04") ); // ==> ptree
+    console.log( parse(date_code, "2021-03-04") ); // eval exp ...
 
