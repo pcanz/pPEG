@@ -808,12 +808,12 @@ function parse(codex, input, extend, options) {
         if (result) {
             if (env.options.short) return env.tree[0]; // OK
             report += "Fell short at line: "+line_number(input, env.pos)+"\n";
-            if (env.pos === env.peak) {
+            if (env.fault_pos > -1) { //(env.pos === env.peak) {
                 report += line_report(input, env.peak);
             }
             return fault_report(report);
         }
-        if (env.fault_pos === env.peak) {
+        if (env.fault_pos > -1) { //}=== env.peak) {
             report += "In rule: "+env.fault_rule+
                 ", expected: "+exp_show(env.fault_exp)+", ";
         }
