@@ -1,0 +1,42 @@
+--- boot.txt case:1
+
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (' ' rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = id / sq / dq / chs / group
+
+    id    = [a-zA-Z_]+
+    pfx   = [&!~]
+    sfx   = [+?*]
+
+    sq    = "'" ~"'"* "'"
+    dq    = '"' ~'"'* '"'
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+
+--  boot.txt case:1 input:1
+
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (' ' rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = id / sq / dq / chs / group
+
+    id    = [a-zA-Z_]+
+    pfx   = [&!~]
+    sfx   = [+?*]
+
+    sq    = "'" ~"'"* "'"
+    dq    = '"' ~'"'* '"'
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+    
+-
+["Peg",[["rule",[["id","Peg"],["seq",[["dq","\" \""],["rep",[["seq",[["id","rule"],["dq","\" \""]]],["sfx","+"]]]]]]],["rule",[["id","rule"],["seq",[["id","id"],["dq","\" = \""],["id","alt"]]]]],["rule",[["id","alt"],["seq",[["id","seq"],["rep",[["seq",[["dq","\" / \""],["id","seq"]]],["sfx","*"]]]]]]],["rule",[["id","seq"],["seq",[["id","rep"],["rep",[["seq",[["sq","' '"],["id","rep"]]],["sfx","*"]]]]]]],["rule",[["id","rep"],["seq",[["id","pre"],["rep",[["id","sfx"],["sfx","?"]]]]]]],["rule",[["id","pre"],["seq",[["rep",[["id","pfx"],["sfx","?"]]],["id","term"]]]]],["rule",[["id","term"],["alt",[["id","id"],["id","sq"],["id","dq"],["id","chs"],["id","group"]]]]],["rule",[["id","id"],["rep",[["chs","[a-zA-Z_]"],["sfx","+"]]]]],["rule",[["id","pfx"],["chs","[&!~]"]]],["rule",[["id","sfx"],["chs","[+?*]"]]],["rule",[["id","sq"],["seq",[["dq","\"'\""],["rep",[["pre",[["pfx","~"],["dq","\"'\""]]],["sfx","*"]]],["dq","\"'\""]]]]],["rule",[["id","dq"],["seq",[["sq","'\"'"],["rep",[["pre",[["pfx","~"],["sq","'\"'"]]],["sfx","*"]]],["sq","'\"'"]]]]],["rule",[["id","chs"],["seq",[["sq","'['"],["rep",[["pre",[["pfx","~"],["sq","']'"]]],["sfx","*"]]],["sq","']'"]]]]],["rule",[["id","group"],["seq",[["dq","\"( \""],["id","alt"],["dq","\" )\""]]]]]]]

@@ -1,0 +1,49 @@
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (" " rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = call / sq / dq / chs / group / extn
+
+    id    = [a-zA-Z_] [a-zA-Z0-9_]*
+    pfx   = [&!~]
+    sfx   = [+?] / '*' range?
+    range = num (dots num?)?
+    num   = [0-9]+
+    dots  = '..'
+
+    call  = id !" ="
+    sq    = "'" ~"'"* "'" 'i'?
+    dq    = '"' ~'"'* '"' 'i'?
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+    extn  = '<' ~'>'* '>'
+
+    _space_ = ('#' ~[\n\r]* / [ \t\n\r]*)*
+--
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (" " rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = call / sq / dq / chs / group / extn
+
+    id    = [a-zA-Z_] [a-zA-Z0-9_]*
+    pfx   = [&!~]
+    sfx   = [+?] / '*' range?
+    range = num (dots num?)?
+    num   = [0-9]+
+    dots  = '..'
+
+    call  = id !" ="
+    sq    = "'" ~"'"* "'" 'i'?
+    dq    = '"' ~'"'* '"' 'i'?
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+    extn  = '<' ~'>'* '>'
+
+    _space_ = ('#' ~[\n\r]* / [ \t\n\r]*)*

@@ -1,0 +1,39 @@
+ 
+date  = year '-' month '-' day
+year  = [1-2] [0-9]*3
+month = [0-1] [0-9]
+day   = [0-3] [0-9]
+--
+2021-04-05
+--
+2021-04/05
+---
+s   = 'a' x 'b'
+x   =  '' y 'z'
+y   = x
+--
+ayb
+---
+    s   = any* eof
+    any = ~[]
+    eof = !any
+--
+xyz
+---
+    s = " abc"i*
+--
+abc ABC aBc
+---
+s = '\' [nrt]
+--
+\n
+---
+# test comments....
+date  = year '-' month '-' day
+# ...
+year  = [1-2] [0-9]*3
+month = [0-1] [0-9] # comment..
+day   = [0-3] [0-9]
+# last comment
+--
+2021-04-05

@@ -1,0 +1,39 @@
+
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (' ' rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = id / sq / dq / chs / group
+
+    id    = [a-zA-Z_]+
+    pfx   = [&!~]
+    sfx   = [+?*]
+
+    sq    = "'" ~"'"* "'"
+    dq    = '"' ~'"'* '"'
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+
+--
+
+    Peg   = " " (rule " ")+
+    rule  = id " = " alt
+
+    alt   = seq (" / " seq)*
+    seq   = rep (' ' rep)*
+    rep   = pre sfx?
+    pre   = pfx? term
+    term  = id / sq / dq / chs / group
+
+    id    = [a-zA-Z_]+
+    pfx   = [&!~]
+    sfx   = [+?*]
+
+    sq    = "'" ~"'"* "'"
+    dq    = '"' ~'"'* '"'
+    chs   = '[' ~']'* ']'
+    group = "( " alt " )"
+    
