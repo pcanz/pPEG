@@ -2,10 +2,9 @@
 
 Most practical computer languages can be defined with a Context Free Grammar (CFG) or a Parser Expression Grammar (PEG). But there are some syntactic snags that are beyond the power of a CFG or a PEG and require a Context Sensitive Grammar (CSG).
 
-There is no easy way to specify a formal CSG. Features with syntax that require a CSG need a grammar rule escape-hatch to implement pragmatic work around solutions.
-
 What exactly is a CSG? And how do we know it when we see it? The theory is fine, but in practice it is not very helpful. We need to be able to spot the need for a CSG, and we need to know how to work around the problem.
 
+A pPEG can be extended to parse the occasional CSG syntax that appears in practice.
 
 ##  Grammar Theory
 
@@ -29,7 +28,7 @@ A PEG grammar can specify any unambiguous CFG, but it also goes a little further
     A = 'a' A? 'b'
     B = 'b' B? 'c'
 
-This is a rather contrived example to prove the point. Unfortunately a PEG can not handle the features that require a CSG that come up in practice.
+This is a rather contrived example to prove the point. Unfortunately a PEG can not handle CSG that occurs in practice.
 
 
 ##  Practical Examples
@@ -98,7 +97,7 @@ The parser can then treat the indentation tokens like brackets:
 
     block  = INDENT (line / block)* UNDENT
 
-This has proved very effective but it is aspecial purpose solution that is outside the grammar parser.
+This has proved very effective but it is a special purpose solution that is outside the grammar parser.
 
 
 ##  Semantic Actions
@@ -111,23 +110,15 @@ One way to tackle the CSG syntax problems in the previous examples is to allow s
 
 The semantic action in curly brackets must be able to see the current partial parse tree so that it can compare the matched strings, and cause the `tick2` rule to fail if they don't match.
 
-This is difficult to implement in a recursive decent parser. Restricting the semantic actions so that they can only access the result of their own rule simplifies the implementation:
+In general the match result may need to be pushed onto a stack to allow for recursive grammar rules.
 
-    code   = ticks1 ~ticks2* ticks2
-    ticks1 = '`'+  { ticks = <ticks1> }
-    ticks2 = '`'+  { <ticks2> == ticks }
-
-The `ticks1` semantic action puts the rule result `<tick1>` into a variable `ticks` in a context that is visible to other semantic actions.  
-
-In general the variable `ticks` may need to be pushed onto a stack to allow for recursive grammar rules. The problem now is how to pop values off the stack correctly.
-
-    code   = ticks1 ~ticks2* ticks2 { ticks.pop() }
-    ticks1 = '`'+  { ticks.push(tick1) }
-    ticks2 = '`'+  { ticks2 == ticks }
+    elem = '<' tag1 '>' content '</' tag2 '>' { tag = tags.pop(); }
+    tag1 = [a-z]+ { tags.push(tag); tag = tag1; }
+    tag2 = [a-z]+ { tag2 == tag1 }
 
 Semantic actions that allow arbitrary programming language code are certainly able to solve this kind of CSG problem, but the price to pay may be too high:
 
-*   The grammar is not portable, it is implementation language specific.
+*   The grammar is not portable, it is programming language specific.
 
 *   The grammar specification is harder to read and understand.
 
@@ -135,7 +126,7 @@ Semantic actions require careful design to ensure they are idempotent for gramma
 
 Semantic actions can be very useful, but they should be clearly separated. Most practical uses of semantic actions can be fully decoupled from the grammar syntax specification. They can be implemented as parse tree transformations.
 
-Handling CSG requirements is the exception, by their very nature they can not be separated out from the grammar specification. Some restricted form of semantic actions are required, or some different way to solve the problem.
+Handling CSG requirements is the exception, by their very nature they may be essential to the parser and can not be separated out from the grammar specification. Some restricted form of semantic actions are required, or some different way to solve the problem.
 
 
 ##  Grammar Extensions
@@ -177,14 +168,14 @@ Following this advice the XML grammar should use a normal pPEG rule such as:
 
 As mentioned earlier this requires a semantic check to ensure the *same* start and end tags have been matched.
 
-However, if the grammar is required to enforce this check, then an extension function can be used. The `<same name>` function can be used to match the same text that the `name` rule previously matched: 
+However, if the grammar requires this check to be enforced, then the `<same name>` function can be used to match the same text that the `name` rule previously matched: 
 
     elem = '<' tag atts '>' content '</' <same tag> '>'
     tag  = [a-zA-Z]+
 
 The `<same name>` function searches back through sibling nodes in the parse tree to find the nearest previous `["name", ...]`. This allows nested content to match nested name elements.
 
-The `<same name>` extension can be used to match inset indentations for nested blocks:
+The `<same name>` extension can also be used to match inset indentations for nested blocks:
 
     block   = inset line (<same inset> line / block)*
     inset   = [ \t]+
@@ -199,7 +190,7 @@ A special `<inset>` function is needed to match a white-space inset if and only 
     line    = ~[\n\r]* nl?
     nl      = \n \r? / \r
 
-The `<inset>` extension can match space and or tab characters to meet specific design requirements.
+The `<inset>` extension can match space and and or tab characters to meet specific design requirements.
 
 In summary, a small library of extension functions can be used to cope with the occasional CSG syntax requirements that are found in practice.
 

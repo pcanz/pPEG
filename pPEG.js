@@ -1,11 +1,9 @@
 /*
     pPEG in JavaScript
 
-    exports peg.compile(...grammar...)
+    exports: peg.compile(`...grammar...`)
 
     No dependencies, this is the only file you need.
-
-    Peter Cashin
 */
 
 pPEG_grammar = `
@@ -784,7 +782,7 @@ function parse(codex, input, extend, options) {
         input,
         pos: 0,
         peak: 0, // pos high water mark
-        depth: 0, // rule recursion
+        depth: -1, // rule recursion
         max_depth: 100,
         rule_names: [], // dynamic stack
         tree: [], // ptree construction
