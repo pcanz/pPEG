@@ -38,7 +38,7 @@ The first grammar is for a CSV (Comma Separated Value) format:
         record = field (',' field)*
         field  = quote+ / text
         quote  = '"' ~'"'* '"'
-        text   = ~[,\n\r]*
+        text   = ~[,\n\r]+
         _eol   = [\n\r]+
     `);
 
