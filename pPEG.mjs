@@ -341,7 +341,7 @@ function EXTN(exp, env) { // [EXTN, "<xxx>"]
 const builtins = {
     "?": trace_trigger,
     "same": same_match,
-    "opex": opex,
+    "infix": infix,
 }
 
 function builtin(key) {
@@ -354,14 +354,39 @@ function same_match(exp, env) {
     return true;
 }
 
-function opex(exp, env) {
-    console.log(exp);
-    console.log(env.depth, env.rule_names);
-    const stack = env.stack[env.depth];
-    console.log(env.start, env.stack);
-    console.log(stack, env.tree); //.slice(stack));
-    return true;
+// <infix> -------------------------------------------------
+
+const BIND_POWER = {
+    _0__ : 1, _1__ : 3, _2__ : 5, _3__ : 7, _4__ : 9, 
+    _5__ : 11, _6__ : 13, _7__ : 15, _8__ : 17, _9__ : 19, 
+    __0_ : 2, __1_ : 4, __2_ : 6, __3_ : 8, __4_ : 10, 
+    __5_ : 12, __6_ : 14, __7_ : 16, __8_ : 18, __9_ : 20, 
 }
+
+function infix(exp, env) {
+    const stack = env.stack[env.depth];
+    if (env.tree.length - stack < 3) return true
+    let next = stack-1; // tree stack index
+    env.tree[stack] = pratt(0);
+    env.tree.length = stack+1;  
+    return true;
+
+    function pratt(lbp) {
+        let result = env.tree[next+=1];
+         while (true) {
+            const op = env.tree[next+=1];
+            let rbp = op? BIND_POWER[op[0].slice(-4)] || 0 : -1;
+            if (rbp < lbp) {
+                next -= 1; // restore op
+                break;
+            }
+            rbp = rbp%2===0? rpb-1 : rbp+1;
+            result = [op[1], [result, pratt(rbp)]];
+        }
+        return result;
+    }
+}
+
 // fault reporting -------------------------------------------------------
 
 function line_report(str, pos, note="") {
@@ -830,22 +855,6 @@ function parse(codex, input, extend, options) {
     }
     return env.tree[0];
 }
-
-
-// exports.compile = function compile(grammar, extend, options) {
-//     const peg = parse(pPEG_codex, grammar, {}, options);
-//     // console.log(JSON.stringify(peg));
-//     if (peg[0] === "$error") throw peg[1];
-//     const codex = compiler(peg[1]);
-//     // console.log("codex\n",JSON.stringify(codex));
-//     const parser = function parser(input, options) {
-//         return parse(codex, input, extend, options);
-//     }
-//     return {
-//         parse: parser,
-//         codex,
-//     };
-// }
 
 function compile(grammar, extend, options) {
     const peg = parse(pPEG_codex, grammar, {}, options);
