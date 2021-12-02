@@ -1,6 +1,6 @@
 #   A Portable PEG Parser
 
-pPEG makes it easy to use grammar rule specifications in everyday programming, in any programming language. A pPEG grammar can be directly executed as a parser.
+Grammar rules that are easy to use in everyday programming.
 
 pPEG defines three things:
 
@@ -31,18 +31,19 @@ Here are a couple of examples, the first is in JavaScript, the second is in Pyth
 
 The first grammar is for a CSV (Comma Separated Value) format:
 
-    const peg = require("./pPEG.js");
+    import peg from '../pPEG.mjs';
  
     const csv = peg.compile(`
-        File   = (record / _eol)*
-        record = field (',' field)*
-        field  = quote+ / text
-        quote  = '"' ~'"'* '"'
-        text   = ~[,\n\r]+
-        _eol   = [\n\r]+
+        CSV     = Hdr Row+
+        Hdr     = Row
+        Row     = field (',' field)* '\r'? '\n'
+        field   = _string / _text / ''
+
+        _text   = ~[,\n\r]+
+        _string = '"' (~["] / '""')* '"'
     `);
 
-    const test = `
+    const test = `A,B,C
     a1,b1,c1
     a2,"b,2",c2
     a3,b3,c3
@@ -53,10 +54,10 @@ The first grammar is for a CSV (Comma Separated Value) format:
     console.log(JSON.stringify(p));
 
     /*
-    ["File",[
-        ["record",[["text","a1"],["text","b1"],["text","c1"]]],
-        ["record",[["text","a2"],["quote","\"b,2\""],["text","c2"]]],
-        ["record",[["text","a3"],["text","b3"],["text","c3"]]]]]
+    ["CSV",[["Hdr",[["Row",[["field","A"],["field","B"],["field","C"]]]]],
+        ["Row",[["field","a1"],["field","b1"],["field","c1"]]],
+        ["Row",[["field","a2"],["field","\"b,2\""],["field","c2"]]],
+        ["Row",[["field","a3"],["field","b3"],["field","c3"]]],["field",""]]]
     */
 
 Notice that the grammar only requires six lines of text to specify a CSV format that is compatible with the [RFC 4180] standard.
@@ -284,7 +285,7 @@ The corresponding ptree is:
 
 The `add` rule name can label a host programming language function that defines how the argument list will be evaluated. Most of the arithmetic operators are left associative and will use a left list reduction, but the `pow` exponential operator can use a right reduction to evaluate its arguments.
 
-To reduce the number of rules each operator rule could match all operators with the same precedence and associativity. But a better way to deal with a larger number of operators is to extend the pPEG grammar with a version of the Pratt algorithm as explained in [Operator Expressions].
+To reduce the number of rules each operator rule could match all operators with the same precedence and associativity. But a better way to deal with a larger number of operators is to extend the pPEG grammar with a version of the Pratt parser algorithm as explained in [Operator Expressions].
 
 
 ##  JSON Grammar Example
@@ -406,6 +407,7 @@ pPEG is portable and easy to implement in almost any programming language.
 
 [ANTLR]: https://www.antlr.org
 [RFC 4180]: https://www.ietf.org/rfc/rfc4180.txt
+[s-expressions]: https://en.wikipedia.org/wiki/S-expression
 [PEG]: https://bford.info/pub/lang/peg.pdf
 [JSON]: https://www.json.org/json-en.html
 [Operator Expressions]: https://github.com/pcanz/pPEG/blob/master/docs/operator-expressions.md

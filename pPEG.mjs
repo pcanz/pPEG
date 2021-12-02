@@ -414,8 +414,8 @@ function line_info(str, pos) {
         sol = i;
         while (i < pos && str[i] !== "\n" && str[i] !== "\r") i+=1;
     }
-    const row = lf >= cr? lf : cr;
-        col = pos-sol+1;
+    const row = lf >= cr? lf : cr,
+        col = pos-sol+1,
         at = ""+row+"."+col;
     return {row, col, at};
 }
