@@ -357,10 +357,10 @@ function same_match(exp, env) {
 // <infix> -------------------------------------------------
 
 const BIND_POWER = {
-    _0__ : 1, _1__ : 3, _2__ : 5, _3__ : 7, _4__ : 9, 
-    _5__ : 11, _6__ : 13, _7__ : 15, _8__ : 17, _9__ : 19, 
-    __0_ : 2, __1_ : 4, __2_ : 6, __3_ : 8, __4_ : 10, 
-    __5_ : 12, __6_ : 14, __7_ : 16, __8_ : 18, __9_ : 20, 
+    _0 : 1, _1 : 3, _2 : 5, _3 : 7, _4 : 9, 
+    _5 : 11, _6 : 13, _7 : 15, _8 : 17, _9 : 19, 
+    '0R' : 2, '1R' : 4, '2R' : 6, '3R' : 8, '4R' : 10, 
+    '5R' : 12, '6R' : 14, '7R' : 16, '8R' : 18, '9R' : 20, 
 }
 
 function infix(exp, env) {
@@ -375,12 +375,12 @@ function infix(exp, env) {
         let result = env.tree[next+=1];
          while (true) {
             const op = env.tree[next+=1];
-            let rbp = op? BIND_POWER[op[0].slice(-4)] || 0 : -1;
+            let rbp = op? BIND_POWER[op[0].slice(-2)] || 0 : -1;
             if (rbp < lbp) {
                 next -= 1; // restore op
                 break;
             }
-            rbp = rbp%2===0? rpb-1 : rbp+1;
+            rbp = rbp%2===0? rbp-1 : rbp+1;
             result = [op[1], [result, pratt(rbp)]];
         }
         return result;

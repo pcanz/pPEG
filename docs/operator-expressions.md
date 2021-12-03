@@ -153,16 +153,16 @@ For example:
 
 The `<infix>` function transforms the rule result into a functional form using the operator symbols to label the ptree nodes. The operator symbols replace the rule name, and the `expr` rule name will never appear in the ptree.
 
-By default the `<infix>` function generates a left associative ptree without any operator precedence. But we can fix that by using a rule name convention for the operator names. The `<infix>` function interprets a rule name ending with `_x__`, where x is a digit, as a left associative operator with precedence `x`, and an operator rule name ending in `__x_` is right associative.
+By default the `<infix>` function generates a left associative ptree without any operator precedence. But we can fix that by using a rule name convention for the operator names. The `<infix>` function interprets a rule name ending with `_x`, where x is a digit, as a left associative operator with precedence `x`, and an operator rule name ending in `_xR` is right associative.
 
 For example:
 
-    expr   = val (op val)* <infix>
-    op     = " " (op_1__ / op_2__ / op__3_) " "
-    val    = [0-9]+
-    op_1__ = [-+]
-    op_2__ = [*/]
-    op_3__ = '^'
+    expr  = val (op val)* <infix>
+    op    = " " (op_1 / op_2 / op_3R) " "
+    val   = [0-9]+
+    op_1  = [-+]
+    op_2  = [*/]
+    op_3R = '^'
 
     "1" ==> ["val", 1]
 
@@ -172,27 +172,27 @@ For example:
 
     1+2*3 => (+ 1 (* 2 3))
 
-The addative operators have be labelled `op_1__` so they are left associative with a low precedence binding power. The product operators labeled `op_2__` have a higher precedence with a binding power of 2. In the expression `1+2*3` the `*` has a higher binding power relative to the `+` so it will bind its operands tighter. 
+The addative operators have be labelled `op_1` so they are left associative with a low precedence binding power. The product operators labeled `op_2` have a higher precedence with a binding power of 2. In the expression `1+2*3` the `*` has a higher binding power relative to the `+` so it will bind its operands tighter. 
 
-The exponent operator `^` is labelled `op__3_` so it is right associative and it has the highest precedence with a binding power of 3, so it will bind its operands the tightest.
+The exponent operator `^` is labelled `op_3R` so it is right associative and it has the highest precedence with a binding power of 3, so it will bind its operands the tightest.
 
 The `<infix>` extension enables a single operator expression rule to match any number of operators grouped in up to ten levels of precedence. A grammar may have more than one operator expression rule.
 
 For example here is an operator expression for the GO-language which has 19 operators (plus two prefix operatos) in five precedence levels:
 
-    exp     = " " opx " "
-    opx     = pre (op pre)* <infix>
-    pre     = pfx? var
-    var     = val / id / "(" exp ")"
-    val     = [0-9]+
-    id      = [a-z]+
-    pfx     = [-+]
-    op      = " " (op_1__/op_2__/op_4__/op_5__/op_3__) " "
-    op_1__  = '||'
-    op_2__  = '&&'
-    op_3__  = '<'/'>'/'>='/'<='/'=='/'!='
-    op_4__  = [-+|^]
-    op_5__  = [*/%&]/'<<'/'>>''/'&^'
+    exp   = " " opx " "
+    opx   = pre (op pre)* <infix>
+    pre   = pfx? var
+    var   = val / id / "(" exp ")"
+    val   = [0-9]+
+    id    = [a-z]+
+    pfx   = [-+]
+    op    = " " (op_1/op_2/op_4/op_5/op_3) " "
+    op_1  = '||'
+    op_2  = '&&'
+    op_3  = '<'/'>'/'>='/'<='/'=='/'!='
+    op_4  = [-+|^]
+    op_5  = [*/%&]/'<<'/'>>''/'&^'
 
 All the infix operators in GO are left associative.
 
