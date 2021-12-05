@@ -151,7 +151,7 @@ For example:
 
     1+2-3 => (- (+ 1 2) 3)
 
-The `<infix>` function transforms the rule result into a functional form using the operator symbols to label the ptree nodes. The operator symbols replace the rule name, and the `expr` rule name will never appear in the ptree.
+The `<infix>` function transforms the rule result into a functional form using the operator symbols to label the ptree nodes. The operator symbols replace the rule name, and the `expr` rule name does not appear in the ptree.
 
 By default the `<infix>` function generates a left associative ptree without any operator precedence. But we can fix that by using a rule name convention for the operator names. The `<infix>` function interprets a rule name ending with `_x`, where x is a digit, as a left associative operator with precedence `x`, and an operator rule name ending in `_xR` is right associative.
 
@@ -198,20 +198,16 @@ All the infix operators in GO are left associative.
 
 The `<infix>` function is an amazingly simple way to parse all kinds of operator expressions.
  
-To do this magic the `<infix>` function implements the Pratt[^1] parser algorith.
+To do this magic the `<infix>` function implements the Pratt parser algorith, explained in [PrattParsing].
 
-This clever little alorithm has been largley ignored for many years. Fortunatley there has been a revival of interest in Pratt parsing in recent years and there are several nice blog posts that explain how it works:
+As Pratt claimed the technique is simple to understand, trivial to implement, easy to use, extremely efficient, and very flexible. It is dynamic, providing support for truly extensible languages.
 
-*   A nice introduction [Nystrom]
-*   Another neat explination [matklad]
-*   A survery of Pratt parser posts [survey]
+Why then is it not better known? Pratt suggested in the paper that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
 
-The key idea is to assign a numeric binding power value to the operators that can be used to determine the operator precedence and that controls how the parse tree is constructed.
+BNF style grammars are indeed a very nice way to specify data formats and all sorts of programing languages. A PEG grammar provides a simpler form of BNF grammar than a traditional context-free grammar. It is a committed choice grammar that eliminates ambiguity, which is exactly what is needed for computer languages. 
 
-[^1]: Pratt, V.R., Top Down Operator Precedence. Proceedings of the ACM Symposium on Principles of Programming Languages. 1973. pp41-51
+But a PEG grammar struggles with large scale operator expressions, a Pratt parser is much better for that. In pPEG the `<infix>` extension enables PEG grammar rules to be extended with the power of Pratt parsing. 
 
 
-[Nystrom]: https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
-[matklad]: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
-[survey]: https://www.oilshell.org/blog/2017/03/31.html
-[Parsing Techniques]: https://www.amazon.ca/Parsing-Techniques-Practical-Monographs-Computer-ebook/dp/B0017AMLL8/ref=sr_1_2?gclid=Cj0KCQiA7oyNBhDiARIsADtGRZY2jq_9Be-PSMhzCN063R6-1iD77wBaFXfAj00s-0AkQznH961WuwgaAqKfEALw_wcB&hvadid=229967343506&hvdev=c&hvlocphy=9000685&hvnetw=g&hvqmt=e&hvrand=6051650027826917021&hvtargid=kwd-301544705503&hydadcr=16052_10267847&keywords=parsing+techniques&qid=1638139070&sr=8-2
+[PrattParsing]: https://github.com/pcanz/pPEG/blob/master/docs/PrattParsing.md
+
