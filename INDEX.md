@@ -8,15 +8,22 @@ If you have a new implementation that you would like to share I would be delight
 
 ## JavaScript
 
-[pPeg.js] The original implementation of pPEG at: <https://github.com/pcanz/pPEG.js>
+The original implementation of pPEG at: <https://github.com/pcanz/pPEG.js>
 
 ## Prolog
 
+A pure Prolog implementatin for SWI Prolog: TBD
+
 ## Python
+
+Under construction...
 
 ## GO
 
+Still to come...
+
 ## Rust
 
+Hopefully a very fast parser, still under construction....
 
-[pPEG.js]: https://github.com/pcanz/pPEG.js
+

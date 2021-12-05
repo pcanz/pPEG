@@ -2,9 +2,9 @@
 
 A very neat and powerful parser algorith was published back in 1973 by Vaughn Pratt[^1], but for many years this method has been largley ingnored. 
 
-Fortunatley there has been a revival of interest more recently, and there are nice blog posts by [matklad] and [Nystrom] that explain how it works. Another variant that is closer to the original Pratt paper has been popularised by Douglas Crockford in [Crockford], and there is also a [survey] of other posts.
+Fortunatley there has been a revival of interest more recently, and there are nice blog posts by [matklad] and [Nystrom] that explain how it works. Another variant that is closer to the original Pratt paper has been popularised by Douglas [Crockford], and there is also a [survey] of other posts.
 
-I must admit that I found Pratt's paper quite hard to follow, but the key idea of using numeric binding powers for each operator was cystal clear. For my purposes I ended up implementing the Pratt algorithm in a slightly different way, and that may be easier to understand and explain. So here it is.
+I must admit that I found Pratt's paper hard to follow, but the key idea of using numeric binding powers for each operator was cystal clear. For my purposes I ended up implementing the Pratt algorithm in a slightly different way, and that may be easier to understand and explain. So here it is.
 
 ##  The Problem
 
@@ -176,5 +176,5 @@ Pratt claimed the technique is simple to understand, trivial to implement, easy 
 
 [Nystrom]: https://journal.stuffwithstuff.com/2011/03/19/pratt-parsers-expression-parsing-made-easy/
 [matklad]: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
-[Douglas Crockford]: https://www.crockford.com/javascript/tdop/tdop.html
+[Crockford]: https://www.crockford.com/javascript/tdop/tdop.html
 [survey]: https://www.oilshell.org/blog/2017/03/31.html

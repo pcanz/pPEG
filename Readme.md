@@ -2,6 +2,8 @@
 
 Grammar rules that are easy to use in everyday programming.
 
+For implementations see the [INDEX].
+
 pPEG defines three things:
 
 1. A grammar specification language.
@@ -405,6 +407,7 @@ The pPEG grammar allows custom extensions to cope with any gnarly bits of syntax
 
 pPEG is portable and easy to implement in almost any programming language.
 
+[INDEX]: https://github.com/pcanz/pPEG/blob/master/INDEX.md
 [ANTLR]: https://www.antlr.org
 [RFC 4180]: https://www.ietf.org/rfc/rfc4180.txt
 [s-expressions]: https://en.wikipedia.org/wiki/S-expression
