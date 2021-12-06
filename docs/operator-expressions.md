@@ -200,13 +200,15 @@ The `<infix>` function is an amazingly simple way to parse all kinds of operator
  
 To do this magic the `<infix>` function implements the Pratt parser algorith, explained in [PrattParsing].
 
-As Pratt claimed the technique is simple to understand, trivial to implement, easy to use, extremely efficient, and very flexible. It is dynamic, providing support for truly extensible languages.
+The Pratt algorithm needs to know the relative binding power of all the operators, and we can do that in a pPEG grammar with a rule name convention for the operators. This nicley integrates the Pratt algorithm into the grammar rules. The operator precedence is clearly specified in the grammar rules, not off somewhere else in the code implementing the Pratt implementation.
 
-Why then is it not better known? Pratt suggested in the paper that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
+Pratt claimed his technique is trivial to implement, easy to use, extremely efficient, and very flexible. Why then is it not better known? 
 
-BNF style grammars are indeed a very nice way to specify data formats and all sorts of programing languages. A PEG grammar provides a simpler form of BNF grammar than a traditional context-free grammar. It is a committed choice grammar that eliminates ambiguity, which is exactly what is needed for computer languages. 
+Pratt suggested that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
 
-But a PEG grammar struggles with large scale operator expressions, a Pratt parser is much better for that. In pPEG the `<infix>` extension enables PEG grammar rules to be extended with the power of Pratt parsing. 
+With pPEG we don't have to abandon BNR style grammar rules to use a Pratt parser, we can integrate the Pratt algorithm into the grammar rules. BNF grammar rules are traditionally used to specify a context free grammar, but they work just as well for a PEG grammar.
+
+A PEG grammar struggles with large scale operator expressions, a Pratt parser is much better for that. The `<infix>` extension enables pPEG grammar rules to be extended with the power of Pratt parsing. 
 
 
 [PrattParsing]: https://github.com/pcanz/pPEG/blob/master/docs/PrattParsing.md
