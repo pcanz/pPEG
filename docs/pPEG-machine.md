@@ -906,50 +906,7 @@ In the JavaScript implementation there was about a x5 speed-up between simple pa
 
 The parser machine only requires nine instructions so it is reasonably easy to implement. To get started the initial prototype does not even need to implement all the instructions. Features such as numeric repeats and case-insensitive matching are not essential and can be ignored until the final stage.
 
-Here is a starter kit development example in JavaScript:
-
-Step 1:     [Machine-1]
-
-    date grammar
-    4-instruction parser machine
-    no parse tree generation
-    50 LOC grammar and parser code
-    50 LOC parser machine
-
-Step 2:     [Machine-2]
-
-    date grammar, 
-    4-instruction parser machine,
-    generating a parse tree.
-    100 LOC parser machine
-
-Step 3:     [Machine-3]
-
-    date grammar, 
-    7-instruction parser machine,
-    130 LOC parser machine
-
-Step 4:     [Machine-4]
-
-    pPEG boot grammar, 
-    8-instruction parser machine,
-    150 LOC parser machine
-
-Step 5:     [Machine-5]
-
-    full pPEG grammar, 
-    8-instruction parser machine,
-    parser_code from pPEG ptree,
-    export grammar compile API
-    200 LOC parser machine        
-
-A full pPEG implementation:     [Machine-6]
-
-     50 LOC pPEG grammar source and Json ptree
-    250 LOC parser machine
-    250 LOC compiler
-    250 LOC fault and trace reporting
-    800 LOC total
+For a starter kit development example in JavaScript see <https://github.com/pcanz/pPEG.js>.
 
 A pPEG implementation is a small development project, and a lot of fun. It can be developed incrementally, and refined later for performance. The error reporting and trace features require as much code as the parser machine itself.
 
@@ -965,9 +922,4 @@ A pPEG parser machine can be implemented as a small one person project in a few 
 
 [pPEG]: https://github.com/pcanz/pPEG
 [Norvig]: https://norvig.com/lispy.html
-[Machine-1]: https://github.com/pcanz/pPEG/blob/master/docs/code-samples/machine-1.js
-[Machine-2]: https://github.com/pcanz/pPEG/blob/master/docs/code-samples/machine-2.js
-[Machine-3]: https://github.com/pcanz/pPEG/blob/master/docs/code-samples/machine-3.js
-[Machine-4]: https://github.com/pcanz/pPEG/blob/master/docs/code-samples/machine-4.js
-[Machine-5]: https://github.com/pcanz/pPEG/blob/master/docs/code-samples/machine-5.js
-[Machine-6]: https://github.com/pcanz/pPEG/blob/master/pPEG.js
+

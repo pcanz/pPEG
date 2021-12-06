@@ -14,13 +14,13 @@ An even simpler problem is how to add up a list of numbers, say `1+2+3+4`, in th
 
 For most aithmetic operators starting from the left and going step by step to the right gives the correct answer. These expressions are left associative. But exponential power is an exception: `((x^2)^3)` = `x^6`, but  `(x^(2^3))` = `x^8`. For this operator right association is the correct convention.
 
-##  Start At The Beginning
+##  Binding Power
 
 The key idea behind the Pratt algorithm is to assign a numeric weight to the binding power of each operator. In arithmetic the `*` operator is given a higher binding power than the `+` so that `1+2*3` will bind the `(2*3)` before the addition as `(1+(2*3))`.
 
-The expression `1-2-3-4` associates from left to right as `(((1-2)-3)-4)`. All the operator are the same, so how do we know that they should be added from left to right and not from right to left? The tick is to give the operator two binding powers, one to the left and the other to the right.
+The expression `1-2-3-4` associates from left to right as `(((1-2)-3)-4)`. But all the operator have the same binding power, so how do we know if they should associate from left to right or right to left? The tick is to give the operator two binding powers, one to the left and the other to the right.
 
-Let's assume that the `-` operator has a binding power of say 2 to the left and 3 to the right, so in `1-2-3` the first `-` will have a binding power of 3 to its right and the second `-` will have a binding power of 2 to its left.  The first `-` operator has a higher binding power than the next one, so it binds its operands first: `(1-2)`, the expression will associated from the left.
+Let's assume that the `-` operator has a binding power of say 2 to the left and 3 to the right, so in `1-2-3` the first `-` will have a binding power of 3 to its right and the second `-` will have a binding power of 2 to its left.  The first `-` operator has a higher binding power than the next one, so it binds its operands tighter: `(1-2)`, and the expression will associated from the left.
 
 The `+` operator can be given the same binding power as the `-` because both these operators associate to the left, and they can be mixed and matched in an expression: `1+2-3+4 => (((1+2)-3)+4)`.
 
@@ -41,6 +41,24 @@ If more operators with lower binding powers are required then the numbers can be
 
 ##  Tree Building
 
+An expression with brackets forms a tree, for example:
+
+         ((1+(2*3))+4)
+
+                +
+               / \
+              +   4
+             / \
+            1   * 
+               / \
+              2   3
+
+In functional form this is:
+
+         (+ (+ 1 (* 2 3)) 4)   or  +( +(1, *(2 3)), 4)
+
+The Lisp s-expresson functional form is a very convenient parse tree structure.
+
 If the input is: `1+2-3+4` then we can start building the parse tree like this:
 
     ()                   <=  1 + 2 - 3 + 4  
@@ -48,43 +66,64 @@ If the input is: `1+2-3+4` then we can start building the parse tree like this:
     (- (+ 1 2) 3)        <=  + 4
     (+ (- (+ 1 2) 3) 4)
 
-The first step takes the first operator and its operands `1+2` and translate them into a functional s-expression tree node `(+ 1 2)`. The second step adds `-3` into the tree. The two operators `+` and `-` have the same precedence and associate to the left as `(- (+ 1 2) 3)`. The last step adds `+4` into the tree in the same way.
+The first step takes the first operator and its operands `1+2` and translate them into a functional s-expression tree node `(+ 1 2)`. 
 
-If the input is: `1+2*3+4` then the parse tree will be built like this:
+The second step adds `- 3` into the tree. The two operators `+` and `-` have the same binding power, but the `+` operator has a higher binding power to the right than the left side binding power of the `-` operator. They will therefore associate to the left as `(- (+ 1 2) 3)`. 
 
-    ()                   <=  1 + 2 * 3 + 4
-    (+ 1 2)              <=  * 3 + 4
-    (+ 1 (* 2 3))        <=  + 4
-    (+ (+ 1 (* 2 3)) 4)
+The last step adds `+ 4` into the tree in the same way.
 
-The second step adds `*3` into the tree, and the `*` has higher precedence than the `+`, so it binds to the right.
+This builds a left hand tree:
 
-Operators with the same precedence and right association will build a tree like this:
+                +
+               / \
+              -   4
+             / \
+            +   3
+           / \
+          1   2
+
+The pattern for building a left hand tree is:
+
+    Tree1 = (op1 Left Right)       <= op2 X
+    Tree2 = (op2 Tree1 X) 
+
+Adding a new operator-operand with left association builds on top of the current tree, making the current tree the left sub-tree with the new operand on the right. The right binding power of the operator at the root of the left sub-tree has a higher binding power than the left binding power of the new operator.
+
+Operators with right association will build a right hand tree like this:
 
     ()                  <= x ^2 ^ 3 ^ 4
     (^ x 2)             <= ^ 3 ^ 4
     (^ x (^ 2 3))       <= ^ 4
     (^ x (^ 2 (^ 3 4)))
 
-The pattern for building a left association is:
+Each new operator slides down the right hand tree to build a new sub-tree at the bottom.
 
-    Tree1 = (op1 Left Right)       <= op2 X
-    Tree2 = (op2 Tree1 X) 
+This builds a right hand tree:
 
-The pattern for right association is:
+             ^
+            / \
+           x   ^
+              / \
+             2   ^
+                / \
+               3   4 
+
+The pattern for building a right hand tree is:
 
     Tree1 = (op1 Left Right) <= op2 X
     Tree2 = (op1 Left (Right <= op2 X))
     Tree3 = (op1 Left (op2 Right X)) 
 
-If `op2` has higher binding power than `op1` and it may or may not have higher binding power than the operator at the root of the `Right` tree. If the `Right` tree is simply a terminal operand then that will have zero binding power and will associate left of `op2` (since `op2` can not have a lower binding power).
+This is more complicated than building the left tree because adding the next operator-operand pair needs to step down the right side. In this example it will always associate to the right with each sub-tree on the way down, because the right binding power of the sub-tree operator is less than the left binding power of the new operator.
 
-So building a tree on the right needs to iterate or recurse down through the right hand tree to find the first sub-tree or operand with left association. Building a tree with left association is a simple step. 
+In general the new opearator needs to check if it should associate to the left or right of each sub-tree. A terminal operand will always have a lower right binding power than the left binding power of any new operator.
+
+To add a new operator-operand pair into a tree we must compare the right binding power of the operator at the root of the tree with the left binding power of the new operator. That determines if the tree should be built to the left or to the right.
 
 
 ##  The Code
 
-A JavaScript program to add another operator-operand into a tree:
+A JavaScript program to add an operator-operand into a tree:
 
     function build_tree(tree, op2, z) {
         if (bind_left(tree, op2)) return [op2, tree, z]; 
@@ -104,11 +143,19 @@ A JavaScript program to add another operator-operand into a tree:
         return tree_bind > (BIND[op]||[0,0])[0];
     }
 
-The `bind_left` function compares the right binding power of the operator at the root of the tree with the `op` that is being added into the tree. It has to cope with a tree that is a terminal token operand, and it has to select the appropriate left or right right binding powers of the two operators.
+The `bind_left` function compares the right binding power of the operator at the root of the tree with the `op` that is being added into the tree. The `build-tree` function then builds on the left or on the right.
 
 The amazing thing is that the core of the algorithm boils down to the three line `build_tree` function, everything else is straighforward book keeping.
 
-We need to drive the tree builder from a list of tokens. For simplicity we will assume that the end of the list of tokens is the end of the inix expression:
+Building on the left:
+
+    [op1, x, y] +  op2, z   ==>   [op2, [op1, x, y], z]
+
+Building on the right:
+
+    [op1, x, y]  +  op2, z   ==>   [op2, x, build_tree(y, op2, z)]
+
+To see the tree builder in action we need to drive it from a list of tokens. For simplicity we will assume that the end of the list of tokens is the end of the infix expression:
  
     function infix(tokens) {
         if (tokens.length <3) return tokens;
@@ -150,27 +197,34 @@ Here is the code:
             next += 1;
             while (true) {
                 const op = tokens[next];
-                if (right_bind(op) < lbp) break;
+                if (lbp > left_bind(op)) break;
                 next += 1; // consume op
-                result = [op, result, pratt(left_bind(op))];
+                result = [op, result, pratt(right_bind(op))];
             }
             return result;
         }
     }
 
-    function right_bind(op) {
-        return op? (BIND[op]||[0,0])[1] : -1;
+    function left_bind(op) {
+        return op? (BIND[op]||[0,0])[0] : -1;
     }
 
-    function left_bind(op) {
-        return (BIND[op]||[0,0])[0];
+    function right_bind(op) {
+        return (BIND[op]||[0,0])[1];
     }
 
     let tree = infix_pratt("1+2*3+4".split(''));
 
     console.log(tree); // [ '+', [ '+', '1', [ '*', '2', '3' ] ], '4' ]
 
-Pratt claimed the technique is simple to understand, trivial to implement, easy to use, extremely efficient, and very flexible. It is dynamic, providing support for truly extensible languages. In my opinion he was right, it lives up to all these claims, except perhaps for being easy to understand, until you do!
+The `pratt` function has an `lbp` paramater that is given the binding power (to the right) of the left operator (the previous operator).
+
+If the next operator has a higher binding power (to its left) then the tree will be built to the right in a loop with recursion that sets the next `lbp` left operator binding power.
+
+If the next operator has a lower binding power than the `lbp` operator binding power then the loop will break and the right hand tree will be returned as the result. This will build up the left hand tree.
+
+Pratt claimed the technique is simple to understand, trivial to implement, easy to use, extremely efficient, and very flexible. In my opinion he was right, it lives up to all these claims, except perhaps for being easy to understand. For me it took some time, and thinking about it as incrementally building up a left hand or right hand tree helped me see what was going on.
+
 
 [^1]: Pratt, V.R., Top Down Operator Precedence. Proceedings of the ACM Symposium on Principles of Programming Languages. 1973. pp41-51
 
