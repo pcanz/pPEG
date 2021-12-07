@@ -16,13 +16,13 @@ That's all well and good, but not much help in spotting some syntax that require
 
 It is a little more helpful to know how to test certain forms of input string that a parser based on a particular type of grammar can or can not recognize.
 
-A CFG parser *can* match a string of the form: A^n B^n, that is, some A repeated n times, followed by some B repeated exactly the same number of times.
+A CFG parser *can* match a string of the form: A<sup>n</sup>B<sup>n</sup>, that is, some A repeated n times, followed by some B repeated exactly the same number of times.
 
     S = A S? B 
 
-A CFG parser can *not* match a string of the form: A^n B^n C^n, that requires a CSG.
+A CFG parser can *not* match a string of the form: A<sup>n</sup>B<sup>n</sup>C<sup>n</sup>, that requires a CSG.
 
-A PEG grammar can specify any unambiguous CFG, but it also goes a little further than a CFG. Here is a PEG grammar for A^n B^n C^n:
+A PEG grammar can specify any unambiguous CFG, but it also goes a little further than a CFG. Here is a PEG grammar for A<sup>n</sup>B<sup>n</sup>C<sup>n</sup>:
 
     S = &(A 'c') 'a'+  B !any
     A = 'a' A? 'b'
