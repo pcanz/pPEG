@@ -130,20 +130,27 @@ Other operators can be slotted into precedence order, and white-space can be all
 
 This works very well for a modest number of operators, but it forces every operator to have its own rule with its own precedence level (determined by the order the rules are called in). This becomes cumbersome and inefficient if there are too many operators requiring too many rules.
 
-For a larger number of operators we can use an `<infix>` extension function.
+Fortunately pPEG has another way to handle grammars that require a large number of operators.
 
 
-##  Infix Extension
+##  Large Grammars
 
-Let's start again, but this time with the aid of an `<infix>` extension function. This requires a named operator rule, which can match multiple operator symbols.
+Let's start again, but this time with the with the objective of using a minimal number of grammar rules. The first step is to use a rule matching multiple operator symbols for operators with the same precedence and associativity.
 
 For example:
 
-    expr = val (op val)* <infix>
+    expr = val (op val)*
     op   = " + " / " - "
     val  = [0-9]+
 
     "1" ==> ["val", 1]
+
+    "1+2" ==> ["expr", [["val", "1"], ["op", "+"], ["val", "2"]]]
+
+    "1+2-3" ==> ["expr", [["val", "1"], ["op", "+"], ["val", "2"],
+                            ["op", "-"], ["val", 3]]]
+
+The parse tree reflects exactly how the grammar matches the input. This parse tree can be transformed into a functional format that is easier for an application to process:
 
     "1+2" ==> ["+", [["val", "1"], ["val", "2"]]]
 
@@ -151,34 +158,32 @@ For example:
 
     1+2-3 => (- (+ 1 2) 3)
 
-The `<infix>` function transforms the rule result into a functional form using the operator symbols to label the ptree nodes. The operator symbols replace the rule name, and the `expr` rule name does not appear in the ptree.
+The parse tree is transformed into a nice AST for the operator expression. A Pratt parser algorithm is used to perform this transform, more on that shortly.
 
-By default the `<infix>` function generates a left associative ptree without any operator precedence. But we can fix that by using a rule name convention for the operator names. The `<infix>` function interprets a rule name ending with `_x`, where x is a digit, as a left associative operator with precedence `x`, and an operator rule name ending in `_xR` is right associative.
+The operator symbols replace the rule name, and the `expr` rule name does not appear in the ptree. The result is similar to the ptree that we obtained from a grammar with a separate rule for each operator (where the rule name stands for the operator symbol).
+
+The next step is to allow operators with different precedence and associativity. But we stll want the grammar to define the precedence and assoicativity, so we adopt a covention for the operators rule names. The suffix format `_xL` is used to denote operators with precedence `x` that are left associative. The `x` is typically a digit but it may be a letter, the ASCII character code value determines the operators binding power. The suffix `_xL` denotes left associative operators.
 
 For example:
 
-    expr  = val (op val)* <infix>
-    op    = " " (op_1 / op_2 / op_3R) " "
+    expr  = val (op val)*
+    op    = " " (op_1L / op_2L / op_3R) " "
     val   = [0-9]+
-    op_1  = [-+]
-    op_2  = [*/]
+    op_1L = [-+]
+    op_2L = [*/]
     op_3R = '^'
 
-    "1" ==> ["val", 1]
-
-    "1+2" ==> ["+", [["val", "1"], ["val", "2"]]]
+The rule names label the operators with their binding power and associativity, which enables the parse tree to be transformed inot a function form:
 
     "1+2*3" ==> ["+", [["val", "1"], ["*", [["val", "2"], ["val", "3"]]]]]
 
     1+2*3 => (+ 1 (* 2 3))
 
-The addative operators have be labelled `op_1` so they are left associative with a low precedence binding power. The product operators labeled `op_2` have a higher precedence with a binding power of 2. In the expression `1+2*3` the `*` has a higher binding power relative to the `+` so it will bind its operands tighter. 
+The `op_1L` operators are the lowest binding power and associate to the left, the `op_2L` operators have a higher binding power, and the `op_3R` operator has an even higher binding power and assciates to the right.
 
-The exponent operator `^` is labelled `op_3R` so it is right associative and it has the highest precedence with a binding power of 3, so it will bind its operands the tightest.
+The parse tree transform may be done after the parser has built a complete parse tree, or it can be integrated into the grammar with a `<infix>` extension function.
 
-The `<infix>` extension enables a single operator expression rule to match any number of operators grouped in up to ten levels of precedence. A grammar may have more than one operator expression rule.
-
-For example here is an operator expression for the GO-language which has 19 operators (plus two prefix operatos) in five precedence levels:
+For example, here is the grammar for the operator expressions of the GO-language. There are 19 operators (plus two prefix operatos) in five precedence levels:
 
     exp   = " " opx " "
     opx   = pre (op pre)* <infix>
@@ -187,24 +192,18 @@ For example here is an operator expression for the GO-language which has 19 oper
     val   = [0-9]+
     id    = [a-z]+
     pfx   = [-+]
-    op    = " " (op_1/op_2/op_4/op_5/op_3) " "
-    op_1  = '||'
-    op_2  = '&&'
-    op_3  = '<'/'>'/'>='/'<='/'=='/'!='
-    op_4  = [-+|^]
-    op_5  = [*/%&]/'<<'/'>>''/'&^'
+    op    = " " (op_1L/op_2L/op_4L/op_5L/op_3L) " "
+    op_1L = '||'
+    op_2l = '&&'
+    op_3L = '<'/'>'/'>='/'<='/'=='/'!='
+    op_4L = [-+|^]
+    op_5L = [*/%&]/'<<'/'>>'/'&^'
 
-All the infix operators in GO are left associative.
-
-The `<infix>` function is an amazingly simple way to parse all kinds of operator expressions.
+The `<infix>` function is an amazingly simple way to parse all kinds of operator expressions and generate a nice functional form parse tree.
  
 To do this magic the `<infix>` function implements the Pratt parser algorith, explained in [PrattParsing].
 
-The Pratt algorithm needs to know the relative binding power of all the operators, and we can do that in a pPEG grammar with a rule name convention for the operators. This nicley integrates the Pratt algorithm into the grammar rules. The operator precedence is clearly specified in the grammar rules, not off somewhere else in the code implementing the Pratt implementation.
-
-Pratt claimed his technique is trivial to implement, easy to use, extremely efficient, and very flexible. Why then is it not better known? 
-
-Pratt suggested that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
+The Pratt algorithm needs to know the relative binding power of all the operators, and we do that in a pPEG grammar with the rule name convention for the operators. This nicley integrates the Pratt algorithm into the grammar rules. The operator precedence is clearly specified in the grammar rules, not off somewhere else in the code implementing the Pratt algorithm.
 
 With pPEG we don't have to abandon BNR style grammar rules to use a Pratt parser, we can integrate the Pratt algorithm into the grammar rules. BNF grammar rules are traditionally used to specify a context free grammar, but they work just as well for a PEG grammar.
 

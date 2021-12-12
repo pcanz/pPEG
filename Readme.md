@@ -20,7 +20,7 @@ pPEG aims to be:
 
 3. Easy to implement in any programming language.
 
-The focus is on simplicity and ease of use, but the performance of a pPEG parser can compete with parser code generators such as [ANTLR].
+The focus is on simplicity and ease of use, with a direct grammar interpreter. The performance of a pPEG parser  can compete with parser code generators.
 
 The grammar source language is a text string in the host programming language, and the parse tree output is a simple list structure, a subset of JSON.
 

@@ -12,7 +12,7 @@ The original implementation of pPEG at: <https://github.com/pcanz/pPEG.js>
 
 ## Prolog
 
-A pure Prolog implementatin for SWI Prolog: TBD
+A pure Prolog implementatin for SWI Prolog: <https://github.com/ridgeworks/pPEGpl>
 
 ## Python
 

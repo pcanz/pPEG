@@ -2,9 +2,13 @@
 
 A very neat and powerful parser algorith was published back in 1973 by Vaughn Pratt[^1], but for many years this method has been largley ingnored. 
 
+Pratt claimed his technique is trivial to implement, easy to use, extremely efficient, and very flexible. Why then is it not better known? 
+
+Pratt suggested that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
+
 Fortunatley there has been a revival of interest more recently, and there are nice blog posts by [matklad] and [Nystrom] that explain how it works. Another variant that is closer to the original Pratt paper has been popularised by Douglas [Crockford], and there is also a [survey] of other posts.
 
-I must admit that I found Pratt's paper hard to follow, but the key idea of using numeric binding powers for each operator was cystal clear. For my purposes I ended up implementing the Pratt algorithm in a slightly different way, and that may be easier to understand and explain. So here it is.
+I must admit that I found Pratt's paper hard to follow, but the key idea of using numeric binding powers for each operator was cystal clear. I ended up implementing the Pratt algorithm in a slightly different way, and that may be easier to understand and explain. So here it is.
 
 ##  The Problem
 

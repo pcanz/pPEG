@@ -28,14 +28,14 @@ A PEG grammar can specify any unambiguous CFG, but it also goes a little further
     A = 'a' A? 'b'
     B = 'b' B? 'c'
 
-This is a rather contrived example to prove the point. Unfortunately a PEG can not handle CSG that occurs in practice.
+This is a rather contrived example to prove the point. Unfortunately a PEG can not handle CSG syntax that does occasionaly occur in practice.
 
 
 ##  Practical Examples
 
 The name itself: "Context Free Grammar" makes the point that CFG rules can not take into account any global context. A CFG (or PEG) parser can not take into account how the parser has matched prior input.
 
-A key reason that a CSG may be required occurs when the parser must match exactly the *same* string as it has already matched somewhere earlier in the input. This is a key distinguishing feature:
+If the parser must match exactly the *same* string as it has already matched somewhere earlier in the input, then this requires a context sensitive grammar. This is a key distinguishing feature:
 
 *   A CSG can require the *same* input text to be matched again later.
 
@@ -47,9 +47,11 @@ This is very common. A good example is the CFG for XML (and HTML). The CFG gramm
 
 There are lots of other examples. Guido van Rossum described several issues like this that the original Python parser ignored, some of which he later tackled with a new PEG based parser implementation. 
 
-The show stopper happens when the parser can not simply ignore the requirement to match the *same* string again, the syntax can not allow the parser to continue without being able to match exactly the same input as some previous match. 
+The show stopper happens when the parser can not simply ignore the requirement to match the *same* string again. That is, the syntax can not allow the parser to continue without being able to match exactly the same input as some previous match. 
 
 Often it is the *length* of the match that is the critical factor. For example to match an open quote to a closing quote, where the number of quote marks must match.
+
+### Quote Marks
 
 The syntax for a Markdown back-tick quoted string of `code` is an example. These quote marks can use any number of back-ticks in order to quote a lesser number inside the quoted `code` string.  
 
@@ -60,22 +62,22 @@ A PEG like this won't work:
 
 The parser has no way to match the *same* `ticks` string in the opening and closing `ticks`.
 
-A possible work-around is to define as many as needed:
+The standard work-around is to define a sufficient number of rules one for each different run of quote marks:
 
-    code  = t1 / t2 /t3 / ...
+    code  = ... / t3 / t2 / t1
     t1    = '`' ~'`'* '`'
     t2    = '``' ~'``'* '``'
     t3    = '```' ~'```'* '```'
     ...
 
-This is not a very satisfactory solution.
+This works, but it is not be a very satisfactory solution.
 
 In Rust the `##"raw-string"##` syntax has the same problem:
 
     raw-string = fence '"' ~('"' fence)* '"' fence
     fence      = '#'+
 
-The parser has no way to ensure tha `fence` is the same before and after the string, and this can not be deferred to a parse tree check.
+The parser has no way to ensure tha `fence` is the same before and after the string, and this requirement can not be deferred to a parse tree check.
 
 
 ###  Indented Blocks
@@ -91,13 +93,13 @@ This grammar for a simple indented block won't work:
 
 There is no way to check that indented lines in the `block` have exactly the *same* indent.
 
-The Python parser avoided this problem by implementing indentation in the lexical scanner. The scanner keeps track of the current indentation and emits an INDENT token when the indention increases, and a UNDENT tokens when the indentation decreases.
+The Python parser avoids this problem by implementing indentation in the lexical scanner. The scanner pushes the inset on to a stack and emits an INDENT token when the indention increases, and a UNDENT tokens when the stack is popped and the indentation decreases.
 
 The parser can then treat the indentation tokens like brackets:
 
     block  = INDENT (line / block)* UNDENT
 
-This has proved very effective but it is a special purpose solution that is outside the grammar parser.
+This has proved very effective but it requires special purpose code that is outside the grammar syntax.
 
 
 ##  Semantic Actions
@@ -147,61 +149,79 @@ Where the `<quote>` extension is a parser function that matches forward in the i
 
 The `<quote>` function returns text matched between the quote marks as a rule result: `["quote", "....matched text..."]`.
 
-The Rust raw string syntax needs a slightly different `<quoter>` function that reverses the text string matched for the opening quote mark:
+The Rust raw string syntax could have its own custon extension:
+
+    raw = <raw>
+
+Or a more generic `<quoter>` function could be used. This works much the same as the `<quote>`, but it reverses the text string matched by the opening quote mark:
 
     raw = '#'+ '"' <quoter>
 
-The `<quoter>` extension function could be used for other quote marks, such as:
+The `<indent>` extension can be used to match indented blocks:
 
-    cmt = '/*' <quoter>
+    block = <indent> (<inset> line / block)* <undent>
 
-But this does not require a context sensitive grammar, it can be expressed in pPEG as:
+The `<indent>` matches a white-space inset and compares it with the current inset. If this inset is the same or smaller than the current inset then the `<indent>` will fail. If the inset is larger than the current inset then then it will be pushed onto an inset stack and it becomes the new current inset.
 
-    cmt = '/*' ~'*/'* '*/'
+The `<inset>` function maches a white-space inset if and only if it is the same as the current inset. 
 
-Portable grammars should try to avoid extension functions as much as possible.
+The `<undent>` pops the inset stack, and the new top of the stack becomes the current inset.
 
-Following this advice the XML grammar should use a normal pPEG rule such as:
+### A Generic Extension
 
-    elem = '<' tag atts '>' content '</' tag '>'
-    tag  = [a-zA-Z]+
+The need to match exactly the *same* input that the parser has matched earlier is a common root cause for syntax that requires a CSG. A generic extension that implements this capability can be a useful tool.
 
-As mentioned earlier this requires a semantic check to ensure the *same* start and end tags have been matched.
+The generic `<@name>` extension matches with a `name` rule and fails if the match is not exactly the same as the input that was matched by the previous `name` rule. 
 
-However, if the grammar requires this check to be enforced, then the `<same name>` function can be used to match the same text that the `name` rule previously matched: 
+For example:
 
-    elem = '<' tag atts '>' content '</' <same tag> '>'
-    tag  = [a-zA-Z]+
+    elem    = '<' tag '>' content '</' <@tag> '>'
+    content = (text / elem)*
+    tag     = [a-zA-Z]+
 
-The `<same name>` function searches back through sibling nodes in the parse tree to find the nearest previous `["name", ...]`. This allows nested content to match nested name elements.
+This grammar requires the closing tag to match the opening tag, and the parser will fail if this is not the case.
 
-The `<same name>` extension can also be used to match inset indentations for nested blocks:
+The way it works is that the `<@tag>` extension runs the `tag` rule, then it looks back through the sibling ptree elements to find the previous `tag` rule result and verifies that it is the same result. 
 
-    block   = inset line (<same inset> line / block)*
-    inset   = [ \t]+
-    line    = ~[\n\r]* nl?
-    nl      = \n \r? / \r
+Notice that the `elem` rule can have content that contains nested `elem` results with their own `tag`'s. But these `tags`'s are not siblings in the ptree. The different `elem`'s will match their own `tag` values separatley within each `elem`.
 
-But this will not work properly because `inset` rule will match any new inset, and we only want it to match larger insets.
+The `<@name>` extension could be used for most of the other example too. 
 
-A special `<inset>` function is needed to match a white-space inset if and only if is larger than the previously matched `<inset>`. It generates a parse tree result: `["inset", "    "]`, so the `<same inset>` function can be used to match the same inset again, just as it does for a normal rule result.
+For the Markdown code example:
 
-    block   = <inset> line (<same inset> line / block)*
-    line    = ~[\n\r]* nl?
-    nl      = \n \r? / \r
+    Code = tics code tics
+    code = ~<@tics>*
+    tics = [`]+
 
-The `<inset>` extension can match space and and or tab characters to meet specific design requirements.
+The Rust raw string syntax:
 
-In summary, a small library of extension functions can be used to cope with the occasional CSG syntax requirements that are found in practice.
+    Raw   = fence '"' raw '"' fence
+    raw   = ~('"' <@fence>)* <@fence>
+    fence = '#'+
+
+The indented block example is more complicated because each new indent must check that it is larger than the previous inset. 
+
+The `indent` rule will only match a new `inset` if it is a larger inset than the previous `inset` sibling in the parse tree: 
+
+    Blk    = indent line (<@inset> !' ' line / Blk)*
+    indent = &(<@inset> ' ') inset
+    inset  = ' '+
+    line   = ~[\n\r]* '\r'? '\n'
+
+The `<@name>` extension must allow the `name` rule result to have a prefix that matches the previous `name` rule and trim the `<@name>` result to the same match. If there is no previous `name` rule result the `<@name>` extension will treat that as an empty string (which is a prefix of any string).
+
+The `<@name>` extension aims to directly address the limitation of a CFG or PEG to match the *same* input that was matched earlier. In general this would require a CSG. 
+
+In practice the occasional syntax that can not be specified with PEG grammar rules can be handled with a small library of custom extensions.
 
 
 ##  Conclusion
 
-Most practical computer languages can be defined with a Context Free Grammar (CFG) or a Parser Expression Grammar (PEG). But there are some syntactic snags that are beyond the power of a CFG or a PEG and require a Context Sensitive Grammar (CSG).
+Most practical computer languages can be defined with a Context Free Grammar (CFG) or a Parser Expression Grammar (PEG). But some syntax require a Context Sensitive Grammar (CSG).
 
-A practical solution or work-around to cope with CSG syntax is required. Often a CFG can still be used by adding a requirement that must be enforced by the semantic processing of the parser output. However there are a few practical use-case examples that can not be solved this way. The grammar rules need an escape-hatch.
+A practical work-around to cope with CSG syntax is required. Often a PEG can still be used together with a semantic processing that verifies a restriction on the parser tree. However there are a few practical use-case examples that can not be solved this way. The grammar rules need an escape-hatch.
 
-Semantic actions can be used, but this is not a satisfactory solution because the grammar can now be extended with arbitrary programming language code. It is usually better to keep the grammar syntax issues fully decoupled from the subsequent semantic processing.
+Semantic actions can be used, but this is not a satisfactory solution because the grammar can now be extended with arbitrary programming language code. It is usually better to keep a clean separation between the grammar syntax issues and the subsequent semantic processing.
 
-Grammar extensions provide an escape-hatch that can be more tightly focussed on solving CSG syntax problems. A small library of extension functions can cope with the occasional gnarly syntax problems that do occur in practice. 
+Grammar extensions provide an escape-hatch that can be more tightly focussed on solving CSG syntax problems. A small library of extension functions can be used to cover the occasional gnarly syntax problems that do occur in practice. 
 

@@ -1,6 +1,6 @@
 #   pPEG Documents
 
-To find out what pPEG is all about the palce to satrt is the [README] in the top level direcory. This has references to documents here for further explination.
+To find out what pPEG is all about the palce to satrt is the [README] in the top level direcory.
 
 Specific details for how to use pPEG implementations in different programming laanguages can be found in their own repositories with links form the [INDEX] in the top level directory.
 
