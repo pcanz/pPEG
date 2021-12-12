@@ -8,7 +8,7 @@ If you have a new implementation that you would like to share I would be delight
 
 ## JavaScript
 
-The original implementation of pPEG at: <https://github.com/pcanz/pPEG.js>
+The original implementation of pPEG at: <https://github.com/pcanz/pPEGjs>
 
 ## Prolog
 
