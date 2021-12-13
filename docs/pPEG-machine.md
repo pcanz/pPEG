@@ -906,7 +906,7 @@ In the JavaScript implementation there was about a x5 speed-up between simple pa
 
 The parser machine only requires nine instructions so it is reasonably easy to implement. To get started the initial prototype does not even need to implement all the instructions. Features such as numeric repeats and case-insensitive matching are not essential and can be ignored until the final stage.
 
-For a starter kit development example in JavaScript see <https://github.com/pcanz/pPEG.js>.
+For a starter kit development example in JavaScript see <https://github.com/pcanz/pPEGjs>.
 
 A pPEG implementation is a small development project, and a lot of fun. It can be developed incrementally, and refined later for performance. The error reporting and trace features require as much code as the parser machine itself.
 
