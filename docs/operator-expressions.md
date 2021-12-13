@@ -179,6 +179,10 @@ The rule names label the operators with their binding power and associativity, w
 
     1+2*3 => (+ 1 (* 2 3))
 
+    "x^n^2+1" ==> ["+",[["^",[["^",[["id","x"],["id","n"]]],["val","2"]]],["val","1"]]]
+
+    x^n^2+1 => (+ (^ (x (^ n 2))) 1)
+
 The `op_1L` operators are the lowest binding power and associate to the left, the `op_2L` operators have a higher binding power, and the `op_3R` operator has an even higher binding power and assciates to the right.
 
 The parse tree transform may be done after the parser has built a complete parse tree, or it can be integrated into the grammar with a `<infix>` extension function.
@@ -194,7 +198,7 @@ For example, here is the grammar for the operator expressions of the GO-language
     pfx   = [-+]
     op    = " " (op_1L/op_2L/op_4L/op_5L/op_3L) " "
     op_1L = '||'
-    op_2l = '&&'
+    op_2L = '&&'
     op_3L = '<'/'>'/'>='/'<='/'=='/'!='
     op_4L = [-+|^]
     op_5L = [*/%&]/'<<'/'>>'/'&^'
