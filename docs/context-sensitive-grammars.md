@@ -181,11 +181,13 @@ For example:
 
 This grammar requires the closing tag to match the opening tag, and the parser will fail if this is not the case.
 
-The way it works is that the `<@tag>` extension runs the `tag` rule, then it looks back through the sibling ptree elements to find the previous `tag` rule result and verifies that it is the same result. 
+The way it works is that the `<@tag>` extension looks for the first previous sibling ptree element to find the previous `tag` rule result, and then matches the same result at the current position, or fails. 
 
 Notice that the `elem` rule can have content that contains nested `elem` results with their own `tag`'s. But these `tags`'s are not siblings in the ptree. The different `elem`'s will match their own `tag` values separatley within each `elem`.
 
-The `<@name>` extension could be used for most of the other example too. 
+The `<@name>` extension will also look for the nearest previous `name` rule match in ancestors rule results to allow it to be used in a sub-rule. If there is no previous match then the `<@name>` will match an `''` empty string.
+
+The `<@name>` extension could be used for most of the other examples too. 
 
 For the Markdown code example:
 
@@ -199,16 +201,14 @@ The Rust raw string syntax:
     raw   = ~('"' <@fence>)*
     fence = '#'+
 
-The indented block example is more complicated because each new indent must check that it is larger than the previous inset. 
-
-The `indent` rule will only match a new `inset` if it is a larger inset than the previous `inset` sibling in the parse tree: 
+The indented block example is more complicated because each new indent must check that it is larger than the previous inset.
 
     Blk    = indent line (<@inset> !' ' line / Blk)*
     indent = &(<@inset> ' ') inset
     inset  = ' '+
     line   = ~[\n\r]* '\r'? '\n'
 
-The `<@name>` extension must allow the `name` rule result to have a prefix that matches the previous `name` rule and trim the `<@name>` result to the same match. If there is no previous `name` rule result the `<@name>` extension will treat that as an empty string (which is a prefix of any string).
+The first `<@inset>` will not find a previous `inset` rule result so it will match an empty stirng. 
 
 The `<@name>` extension aims to directly address the limitation of a CFG or PEG to match the *same* input that was matched earlier. In general this would require a CSG. 
 
