@@ -179,7 +179,7 @@ The rule names label the operators with their binding power and associativity, w
 
     1+2*3 => (+ 1 (* 2 3))
 
-    "x^n^2+1" ==> ["+",[["^",[["^",[["id","x"],["id","n"]]],["val","2"]]],["val","1"]]]
+    "x^n^2+1" ==> ["+",[["^",[["var","x"],["^",[["var","n"],["var","2"]]]]],["var","1"]]]
 
     x^n^2+1 => (+ (^ (x (^ n 2))) 1)
 

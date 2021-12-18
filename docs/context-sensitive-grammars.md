@@ -196,7 +196,7 @@ For the Markdown code example:
 The Rust raw string syntax:
 
     Raw   = fence '"' raw '"' fence
-    raw   = ~('"' <@fence>)* <@fence>
+    raw   = ~('"' <@fence>)*
     fence = '#'+
 
 The indented block example is more complicated because each new indent must check that it is larger than the previous inset. 
