@@ -76,10 +76,9 @@ A program script using regular expressions could be used to parse this CSV synta
 
 Here is another example, a grammar for [s-expressions], this time in Python:
 
-    from pPEG import peg
-    import json
+    import pPEG
 
-    sexp = peg.compile("""
+    sexp = pPEG.compile("""
         list  = " ( " elem* " ) "
         elem  = list / atom " "
         atom  = ~[() \t\n\r]+
@@ -91,7 +90,7 @@ Here is another example, a grammar for [s-expressions], this time in Python:
 
     p = sexp.parse(test)
 
-    print(json.dumps(p))
+    print(p)
 
     """
     ["list",[["atom","foo"],["atom","bar"],
@@ -358,7 +357,7 @@ For example, in the JSON grammar the `num` rule returns a string that must be tr
     num    = <number>
     val    = "true" / "false" / "null"
 
-The `<string>` and `<number>` are custom parser functions implemented in the host programming language.
+The `<string>` and `<number>` identify custom parser functions implemented in the host programming language.
 
 A pPEG implementation can choose to interpret the string of characters between angle brackets in any way it chooses. For example, the string may be treated like a command line where the first word is used as a key to a custom function, and the rest of the string is passed in as arguments.
 
@@ -403,7 +402,7 @@ The pPEG grammar language is a modified version of the original [PEG] definition
 
 The standard parse tree format (ptree) aims to be as simple and as portable as possible. This is the interface for applications that use a pPEG parser. The grammar rule names are used to label the nodes in the ptree to make processing a ptree as simple as possible. 
 
-The ptree is a minimal representation for the parser output, but the pPEG grammar rules can be designed to generate a ptree that best suites the application processing.  The ptree is not a traditional AST (Abstract Syntax Tree), it directly represents the pattern matching of the input string that the pPEG grammar rules specify. An application may translate the ptree into a suitable AST if that is required.
+The ptree is a minimal representation for the parser output, but the pPEG grammar rules can be designed to generate a ptree that best suites the application processing.  The ptree is not a traditional AST (Abstract Syntax Tree). The ptree directly represents the pattern matching of the input string as specified by the pPEG grammar rules. An application may translate the ptree into a suitable AST if that is required.
 
 The pPEG grammar allows custom extensions to cope with any gnarly bits of syntax that can not be expressed with PEG rules (e.g. a context sensitive grammar). Extensions can also be used for performance, using implementation specific program language code.
 
