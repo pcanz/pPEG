@@ -18,12 +18,8 @@ An implementatin in SWI Prolog: <https://github.com/ridgeworks/pPEGpl>
 
 A Python version similar to the JavaScript one:  <https://github.com/pcanz/pPEGpy>
 
-## GO
-
-Still to come...
-
 ## Rust
 
-Hopefully a very fast parser, still under construction....
+A Rust implementation: <https://github.com/pcanz/pPEGrs>
 
 
