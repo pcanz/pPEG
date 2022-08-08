@@ -171,46 +171,46 @@ The `<undent>` pops the inset stack, and the new top of the stack becomes the cu
 
 The need to match exactly the *same* input that the parser has matched earlier is a common root cause for syntax that requires a CSG. A generic extension that implements this capability can be a useful tool.
 
-The generic `<@name>` extension matches with a `name` rule and fails if the match is not exactly the same as the input that was matched by the previous `name` rule. 
+The generic `<eq name>` extension matches with a `name` rule and fails if the match is not exactly the same as the input that was matched by the previous `name` rule. 
 
 For example:
 
-    elem    = '<' tag '>' content '</' <@tag> '>'
+    elem    = '<' tag '>' content '</' <eq tag> '>'
     content = (text / elem)*
     tag     = [a-zA-Z]+
 
 This grammar requires the closing tag to match the opening tag, and the parser will fail if this is not the case.
 
-The way it works is that the `<@tag>` extension looks for the first previous sibling ptree element to find the previous `tag` rule result, and then matches the same result at the current position, or fails. 
+The way it works is that the `<eq tag>` extension looks for the first previous sibling ptree element to find the previous `tag` rule result, and then matches the same result at the current position, or fails. 
 
 Notice that the `elem` rule can have content that contains nested `elem` results with their own `tag`'s. But these `tags`'s are not siblings in the ptree. The different `elem`'s will match their own `tag` values separatley within each `elem`.
 
-The `<@name>` extension will also look for the nearest previous `name` rule match in ancestors rule results to allow it to be used in a sub-rule. If there is no previous match then the `<@name>` will match an `''` empty string.
+The `<eq name>` extension will also look for the nearest previous `name` rule match in ancestors rule results to allow it to be used in a sub-rule. If there is no previous match then the `<eq name>` will match an `''` empty string.
 
-The `<@name>` extension could be used for most of the other examples too. 
+The `<eq name>` extension could be used for most of the other examples too. 
 
 For the Markdown code example:
 
     Code = tics code tics
-    code = ~<@tics>*
+    code = ~<eq tics>*
     tics = [`]+
 
 The Rust raw string syntax:
 
     Raw   = fence '"' raw '"' fence
-    raw   = ~('"' <@fence>)*
+    raw   = ~('"' <eq fence>)*
     fence = '#'+
 
 The indented block example is more complicated because each new indent must check that it is larger than the previous inset.
 
-    Blk    = indent line (<@inset> !' ' line / Blk)*
-    indent = &(<@inset> ' ') inset
+    Blk    = indent line (<eq inset> !' ' line / Blk)*
+    indent = &(<eq inset> ' ') inset
     inset  = ' '+
     line   = ~[\n\r]* '\r'? '\n'
 
-The first `<@inset>` will not find a previous `inset` rule result so it will match an empty stirng. 
+The first `<eq inset>` will not find a previous `inset` rule result so it will match an empty string. 
 
-The `<@name>` extension aims to directly address the limitation of a CFG or PEG to match the *same* input that was matched earlier. In general this would require a CSG. 
+The `<eq name>` extension aims to directly address the limitation of a CFG or PEG to match the *same* input that was matched earlier. In general this would require a CSG. 
 
 In practice the occasional syntax that can not be specified with PEG grammar rules can be handled with a small library of custom extensions.
 
