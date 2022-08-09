@@ -1,6 +1,6 @@
 #   Design for Simplicity
 
-The portable Parser Expression Grammar system pPEG aims to be as simple as possible. To do this several features that are provided by other grammar parser systems are not supported in pPEG. The lack of these features does not result in any significant loss of either grammar expressive power or performance.
+The portable Parser Expression Grammar system pPEG aims to be as simple as possible. To do this several features that are provided by other grammar parser systems are not supported in pPEG. It is a bit of a surprise that the lack of these features does not result in any significant loss of either grammar expressive power or performance.
 
 The benefits of simplicity far outweigh any loss of function. If the lack of functionality ever becomes an issue then pPEG has an extension feature that can be used as an escape hatch to do whatever is required. Of course this escape hatch could be abused, but limited extensions do not cause any problems, and most grammars found in practice do not require any extensions.
 
@@ -10,9 +10,9 @@ Now for a list of things that pPEG does not do:
 
 A pPEG is a form of PEG with committed choices that can only define unambiguous grammars.  Most computer languages, protocols, and data structure specifications, are unambiguous by design, so this is a positive advantage and not a limitation.  
 
-Traditional grammar specifications use a Context Free Grammar or CFG, and these grammars can be ambiguous.   That means the grammar can derive the same string in more than one way. There is no known example of a CFG  grammar that can not be expressed with a PEG grammar, but there are examples of PEG grammars that can not be expressed as a CFG.
+Traditional grammar specifications use a Context Free Grammar or CFG, and these grammars can be ambiguous.   That means the grammar can derive the same string in more than one way. There is no good examples of a language with a CFG  grammar that can not be expressed with a PEG grammar, but there are examples of PEG grammars that can not be expressed as a CFG.
 
-There are however some applications, such as natural language processing, that do need ambiguity. For these applications a PEG is not suitable. There are many good grammar parser generators, for example [GLL parsing] that extends the advantage of a PEG style recursive descent parsing to include ambiguous grammars.
+There are however some applications, such as natural language processing, that may need ambiguity. For these applications a PEG is not suitable. There are good grammar parser generators such as [GLL parsing] that extend the advantage of a PEG style recursive descent parsing to include ambiguous grammars.
 
 [GLL parsing]: https://www.sciencedirect.com/science/article/pii/S1571066110001209
 
@@ -29,7 +29,7 @@ Some parsers allow grammar rules to be extended with semantic actions that can t
 
 To keep the grammar clean and portable the pPEG grammar does not support semantic actions. The parser builds a parse tree from the grammar before any semantic actions are applied. The semantic actions are implemented as parse tree transformations. 
 
-However, in rare cases a semantic action may be essential to the operation of the parser.  If the parser really requires semantic actions then either the grammar is poorly designed, or the syntax is so complicated that it can not be expressed with PEG (or CFG) rules.  This can happen occasionally and the pPEG extension feature can be used to deal with these gnarly grammars [see pPEG context sensitive grammars].
+However, in rare cases a semantic action may be essential to the operation of the parser.  If the parser really requires semantic actions then either the grammar is poorly designed, or the syntax is so complicated that it can not be expressed with PEG (or CFG) rules. This can happen occasionally and the pPEG extension feature can be used to deal with these gnarly grammars [see pPEG context sensitive grammars].
 
 [see pPEG context sensitive grammars]: https://github.com/pcanz/pPEG/blob/master/docs/context-sensitive-grammars.md
 
@@ -65,44 +65,47 @@ This generates a flat list (no recursion) without the need to backtrack and re-p
 In theory packrat memos are needed to avoid exponential performance.  But in practice this is not an issue.  If it ever becomes necessary a pPEG extension can be used to provide memos for selected results.
 
 
-##	No AST
+## Simpler Parse Trees
 
-A parser for a grammar generates a parse tree from an input string.  By tradition a grammar defines productions for the syntax of all valid strings in the language that the grammar defines.  In theory a parse tree is a derivation from a grammar in the form of an AST (Abstract Syntax Tree).
+The pPEG grammar rule names label the parse tree nodes that they generate. It is natural to employ rule names that denote a semantic meaning so that the parse tree can be read as a semantic markup of the input text.
 
-In practice a parser may not generate an ideal AST, instead it generates a CST (Concrete Syntax Tree) which can be manicured and transformed into an AST. In a compiler there can be a pipeline with many stages of tree transformation before finally translating an AST into compiled code.
+Anonymous matches (such as literal quotes) are eliminated and do not appear in the parse tree. The parser will also eliminate redundant nodes to simplify the parse tree. But the pPEG rule name conventions allow the grammar designer explicit control to include or exclude the generation of individul grammar rule results.
 
-In contrast, PEG grammar rules are syntax pattern recognizers. A parser can execute the grammar rules directly as instructions to match against an input string and generate a parse tree. The focus of the grammar design is on pattern matching of the input string rather than on derivation of an AST. 
+The pPEG grammar rules are syntax pattern recognizers. A parser can execute the grammar rules directly as instructions to match against an input string and generate a parse tree. The focus of the grammar design is on pattern matching of the input string to generate an SST (Semantic Syntax Tree), rather than on the derivation of a traditional AST (Abstract Syntax Tree). An SST is a type of AST that is simpler than a full blown CST (Concrete Parse Tree). 
 
-A pPEG parser further interprets the grammar rules names as semantic tags, and generates a Semantic Tag Tree or STT.  The STT is a semantic markup of the input string. Grammar rules define the syntax for text that represents a value for a semantic type labelled with the rule name.
-
-A pPEG grammar is designed to generate a STT with semantic data types that an application can transform into an AST, or some other data structure that suits the application. A pPEG grammar can be written to define a minimal SST that eliminates redundant information. 
-
-Literals and anonymous grammar rules are used to match segments of the input string that are not required as part of the text that is the value of a semantic element. 
-
-Terminal grammar rules that directly match segments of the input text generate STT leaf nodes with the rule name as a semantic tag that denotes the meaning of the matched text. In programming language terms this represents a wrapper type for a text string value.
-
-A grammar rule that matches a sequence of sub-elements generates an STT node that has the form of a functional expression.  The rule name is a semantic tag that appears as a prefix function with arguments that are component sub-trees.
-
-For example, for this simple date grammar:
+For example, for this date grammar:
 
     date  = year ‘-‘ month ‘-‘ day
     year  = [0-9]*4 
     month = [0-9]*2 
-    day   = [0-9]*2 
+    day   = [0-9]*2
 
-The results from parsing the input “2022-03-04” as a Lisp s-expression:
+The parse tree from parsing the input “2022-03-04” can be diplayed as:
+
+	date
+	├─year "2022"
+	├─month "03"
+	└─day "04"
+
+Or it may be diplayed as an XML markup:
+
+	<date><year>2022</year>-<month>03</month>-<day>04</day></date>
+
+The semantic markup format shows the complete input string but it may be too verbose.
+
+The same parse tree result may be shown as a Lisp s-expression:
 
 	(date (year “2022”) (month “03”) (day “04”))
 
 The s-expression format can be interpreted as a semantic `date` function with three arguments.
 
-Or in JSON format:
+Or the parse tree can be seen as a JSON data structure:
 
-	[“date”, [“year”, “2022”], [“month”, “03”], [“day”, “04"]]
+	[“date”, [[“year”, “2022”], [“month”, “03”], [“day”, “04"]]]
 
-An application can define a function for the `date` tag to translate the date  into a programming language data  type.
+An application can define a function for the `date` tag to translate the date text fields into a programming language data type.
 
-The previous s-expression or JSON formats are useful ways to display the STT in a human readable format.  However, the underlying implementation of the STT is expected to contain index pointers into the input string.
+There are different ways to display the parse tree in a human readable format. However, the underlying implementation of the parse tree is expected to contain index pointers into the input string.
 
 For example:
 
@@ -112,19 +115,15 @@ For example:
 		{ tag: “day”, start: 8, end: 10, args: [] }
     ]}
 	
-This allows applications to relate STT nodes back to the full input text that they were derived from. This is useful for text transformation applications and for error reporting.
+This allows applications to relate parse tree nodes back to the full input text that they were derived from. This is useful for text transformation applications and for error reporting.
 
-The internal SST data structure can be implemented in different ways to suit the host programming language.  An s-expression or a JSON format can provides a portable representation that is independent of the programming language and implementation details.
+The internal parse tree data structure can be implemented in whatevert way suits the host programming language.  An s-expression or JSON format can provides a portable representation that is independent of the programming language and implementation details.
 
-An s-expression with full SST information:
-
-	(date 0 10 (year “2022”) (month “03”) (day “04”))
-
-Or in JSON format:
+The JSON format with index information:
 
 	[“date”, 0, 10, [“year”, “2022”], [“month”, “03”], [“day”, “04"]]
 
-In summary, a pPEG parser generates a STT, rather than an AST (or CST). A STT is a simplified parse tree that applies the grammar rule names as semantic tags.  This creates a semantic markup of the input text that can be used to represent programming language data types.
+In summary, a pPEG parser generates a SST, rather than an AST (or CST). A SST is a simplified parse tree that applies the grammar rule names as semantic tags. This creates a semantic markup of the input text that can be used to represent programming language data types.
 
 
 ##	No Left Recursion
@@ -143,11 +142,11 @@ Some people find left recursion very expressive and believe that the PEG version
 
 In a pPEG grammar the rule name is a semantic tag to denote the meaning of the matched text, and that includes whether the operator is left or right associative, or neither.
 
-A pPEG parser generates a parse tree in the form of a Semantic Tag Tree, or STT. The rule result is a flat list of terms with the rule name as a prefix in the form of a function expression:
+A pPEG parser generates a parse tree in the form of a Semantic Markup Tree, or SMT. The rule result is a flat list of terms with the rule name as a prefix in the form of a function expression:
 
 	add = term (‘+’ term)*   =>  (add term term term …)  =>  (+ 1 2 3)
 
-The nodes in an STT are in the form of a function with multiple arguments, rather than the traditional binary operator tree for infix operators.
+The nodes in the parse tree are in the form of a function with multiple arguments, rather than the traditional binary operator tree for infix operators.
 
 The functional form is very versatile and the semantic tag (rule name) can be implemented with a function that evaluates the form in many different ways. It may be left (or right) associative and reduce the list with a reduce or fold function, but it can evaluate the from in any way required.
 
@@ -184,20 +183,28 @@ Using a regex introduces conceptual problems because a regex supports nondetermi
 
 	path = .*/(.+)  where a . dot represents any char
 
+This matches everything to the end, and then tries to match a `/` slash character. This requires the parser to back-track from the end, back to the first `/` slash.
+
 The equivalent expression as a PEG does not work: 
 
     path = any* ‘/‘ file     # won't work
     file = any+
     any  = ~[]
 
-Matching any character any number of times will match all the remaining input text and leave nothing else to match . This is because a PEG makes a committed choice and can not backtrack in the way a regex can. But a PEG can use unlimited look-ahead before making a committed choice.
+Matching any character any number of times will match everything, leaving nothing else to match, so it will than fail to match a `/` slash. This is because a PEG makes a committed choice and can not backtrack in the way a regex can.
 
-In a pPEG it would be expressed like this:
+Instead of overshooting and backtracking a PEG can use unlimited look-ahead before making a committed choice.
 
-    path = (~[/]* ‘/‘)* file
-    file = ~[]+
+In a pPEG it could be expressed like this:
 
-A regex also adds further complexity because of the cryptic syntax and the many different extensions and variations offered by different regex implementations.
+    path = (~'/'* ‘/‘)* file
+    file = any+
+
+This matches segments with any characters other than a `/` slash that end with a `/`. The path name before the file name is any number of these segments. The final remainder is the file name.
+
+The mental model for matching with a PEG grammar is different from the mental model for matching with a Regex.
+
+A regex adds a lot more complexity because of the cryptic syntax and the many different extensions and variations offered by different regex implementations.
 
 A regex can be very fast, but there is no fundamental reason why a pPEG parser can not be equally competitive.
 
