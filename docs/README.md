@@ -6,6 +6,8 @@ Specific details for how to use pPEG implementations in different programming la
 
 The collection of documents in this directory covers some generic pPEG topics in more detail and adds general background information.
 
+*   [Design_for_Simplicity] explains the pPEG design philosophy in contrast to other grammar parsers.
+
 *   [Context-Sensitive-Grammars] discusses the use of extension functions to cope with gnarly syntax that is beyond a Context Free grammar and can not be specified with normal pPEG grammar rules.
 
 *   [Operator-Expressions] explains how pPEG deals with operator expressions.
@@ -17,6 +19,7 @@ The collection of documents in this directory covers some generic pPEG topics in
 
 [README]: https://github.com/pcanz/pPEG/blob/master/Readme.md
 [INDEX]: https://github.com/pcanz/pPEG/blob/master/INDEX.md
+[Design_for_Simplicity]: https://github.com/pcanz/pPEG/blob/master/docs/Design-for-Simplicity.md
 [Context-Sensitive-Grammars]: https://github.com/pcanz/pPEG/blob/master/docs/context-sensitive-grammars.md
 [Operator-Expressions]: https://github.com/pcanz/pPEG/blob/master/docs/operator-expressions.md
 [Pratt-Parsing]: https://github.com/pcanz/pPEG/blob/master/docs/PrattParsing.md
