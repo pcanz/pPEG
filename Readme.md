@@ -2,10 +2,6 @@
 
 Grammar rules that are easy to use in everyday programming.
 
-For implementations see the [INDEX].
-
-For an interactive demo try the [dingus].
-
 pPEG defines three things:
 
 1. A grammar specification language.
@@ -28,6 +24,9 @@ The grammar source language is a text string in the host programming language, a
 
 A pPEG parser can be implemented in less than a thousand lines of code without any external dependencies.
 
+For implementations see the [INDEX].
+
+For an interactive demo try the [dingus].
 
 ##  Examples
 
@@ -191,19 +190,19 @@ Here is the pPEG definition of itself:
 
     _space_ = ('#' ~[\n\r]* / [ \t\n\r]*)*
 
-The special `_space_` rule can be used to explicitly define what the space characters in a double quoted string will match. In this case it includes comments.
-
-The implicit default definition of the `_space_` rule is:
-
-    _space_ = [ \t\n\r]*
-
-This pPEG grammar is simpler to read than the original [PEG] as defined by Bryan Ford largely because of the implicit white-space matching.
+This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
 
 The use of `=` in rule definitions instead of `<-` is a cosmetic style choice.
 
 The prefix operator `~x` matches anything other than `x`. This can be used to match any character: `~[]`, eliminating the need for a special `.` to match any character. The `~` operator often provides a simpler way to express PEG rules.
 
 The ability to specify a numeric min to max number of repetitions, and the ability to specify case-insensitive strings of characters, are syntactic sugar that make some grammars easier to specify. 
+
+The special `_space_` rule can be used to explicitly define what the space characters in a double quoted string will match. In this case it includes comments.
+
+The implicit default definition of the `_space_` rule is:
+
+    _space_ = [ \t\n\r]*
 
 
 ##  The Parse Tree
@@ -408,6 +407,9 @@ The pPEG grammar allows custom extensions to cope with any gnarly bits of syntax
 
 pPEG is portable and easy to implement in almost any programming language.
 
+For more information see: [pPEG Documents...]
+
+
 [INDEX]: https://github.com/pcanz/pPEG/blob/master/INDEX.md
 [dingus]: https://pcanz.github.io/pPEGjs/dingus.html
 [ANTLR]: https://www.antlr.org
@@ -417,3 +419,4 @@ pPEG is portable and easy to implement in almost any programming language.
 [JSON]: https://www.json.org/json-en.html
 [Operator Expressions]: https://github.com/pcanz/pPEG/blob/master/docs/operator-expressions.md
 [The pPEG Machine]: https://github.com/pcanz/pPEG/blob/master/docs/pPEG-machine.md
+[pPEG Documents...]: https://github.com/pcanz/pPEG/blob/master/docs/README.md 
