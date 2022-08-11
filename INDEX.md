@@ -22,4 +22,6 @@ A Python version similar to the JavaScript one:  <https://github.com/pcanz/pPEGp
 
 A Rust implementation: <https://github.com/pcanz/pPEGrs>
 
+## C
 
+A C language implementation: <https://github.com/pcanz/pPEGc>
