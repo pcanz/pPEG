@@ -54,11 +54,11 @@ This rule requires the `x` to be parsed twice to match the second alternative, b
 
 Another example, a traditional CFG rule for a list might be expressed as:
 
-	list = item “ , “ list | item
+	list = item ',' list | item
 
 But idiomatic PEG would instead write it as:
 
-	list = item (“ , “ item)*
+	list = item (',' item)*
 
 This generates a flat list (no recursion) without the need to backtrack and re-parse the same `item`. Idiomatic PEG grammars employ rules that naturally avoid the need for memos. 
 

@@ -78,9 +78,10 @@ Here is another example, a grammar for [s-expressions], this time in Python:
     import pPEG
 
     sexp = pPEG.compile("""
-        list  = " ( " elem* " ) "
-        elem  = list / atom " "
+        list  = _ '(' elem* ')' _
+        elem  = list / atom _
         atom  = ~[() \t\n\r]+
+        _     = [ \t\n\r]*
     """)
 
     test = """
@@ -151,13 +152,6 @@ The expression: `~[abc]` is the same as the regex notation: `[^abc]`, but pPEG d
     any  = ~[]     # matches any character
     eof  = !any    # matches the end of input
 
-Matching white-space can clutter a PEG grammar specification. To simplify white-space matching each space character in a double quoted string will match any number of white-space characters. 
-
-For example:
-
-    "abc"       matches 'abc'
-    " abc "     will also match any white-space found before or after 'abc' 
-
 The `<extend>` notation is an escape-hatch that allows a grammar to be extended with custom programming language parser functions. Extension functions may occasionally be needed to define gnarly syntax that is beyond the power of a Context Free Grammar, or any syntax that could not be defined with PEG grammar rules.
 
 
@@ -165,16 +159,16 @@ The `<extend>` notation is an escape-hatch that allows a grammar to be extended 
 
 Here is the pPEG definition of itself:
 
-    Peg   = " " (rule " ")+
-    rule  = id " = " alt
+    Peg   = _ rule+ _
+    rule  = id _ '=' _ alt
 
-    alt   = seq (" / " seq)*
-    seq   = rep (" " rep)*
-    rep   = pre sfx?
+    alt   = seq ('/'_ seq)*
+    seq   = rep*
+    rep   = pre sfx? _
     pre   = pfx? term
     term  = call / sq / dq / chs / group / extn
  
-    id    = [a-zA-Z_] [a-zA-Z0-9_]*
+    group = '('_ alt ')'
     pfx   = [&!~]
     sfx   = [+?] / '*' range?
     range = num (dots num?)?
@@ -182,13 +176,12 @@ Here is the pPEG definition of itself:
     dots  = '..'
 
     call  = id !" ="
+    id    = [a-zA-Z_] [a-zA-Z0-9_]*
     sq    = "'" ~"'"* "'" 'i'?
     dq    = '"' ~'"'* '"' 'i'?
     chs   = '[' ~']'* ']'
-    group = "( " alt " )"
     extn  = '<' ~'>'* '>'
-
-    _space_ = ('#' ~[\n\r]* / [ \t\n\r]*)*
+    _     = ('#' ~[\n\r]* / [ \t\n\r]*)*
 
 This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
 
@@ -197,12 +190,6 @@ The use of `=` in rule definitions instead of `<-` is a cosmetic style choice.
 The prefix operator `~x` matches anything other than `x`. This can be used to match any character: `~[]`, eliminating the need for a special `.` to match any character. The `~` operator often provides a simpler way to express PEG rules.
 
 The ability to specify a numeric min to max number of repetitions, and the ability to specify case-insensitive strings of characters, are syntactic sugar that make some grammars easier to specify. 
-
-The special `_space_` rule can be used to explicitly define what the space characters in a double quoted string will match. In this case it includes comments.
-
-The implicit default definition of the `_space_` rule is:
-
-    _space_ = [ \t\n\r]*
 
 
 ##  The Parse Tree
@@ -254,10 +241,11 @@ Here is one way to write a grammar for arithmetic expressions:
     mul = div ('*' div)*
     div = pow ('/' pow)*
     pow = val ('^' val)*
-    val = " " (sym / num / grp) " "
+    val = _ (sym / num / grp) _
     grp = '(' exp ')'
     sym = [a-zA-Z]+
     num = [0-9]+
+    _   = [ \t\n\r]*
 
 A separate grammar rule has been defined for each operator in order to demonstrate how pPEG generates minimal ptree results. 
 
@@ -294,13 +282,13 @@ To reduce the number of rules each operator rule could match all operators with 
 
 A pPEG version of the [JSON] grammar specifications illustrates how upper case rule names and underscore rule names can be used to manicure the ptree.
 
-A pPEG JSON parser is a useful example since JSON is so widely known and has a well defined grammar. A pPEG JSON parser is not expected to compete with the specialized high performance JSON parsers that are available for many programming languages.  
+A pPEG JSON parser is a useful example since JSON is so widely known and has a well defined grammar.
 
-    json   = " " value " "
+    json   = _ value _
     value  = Obj / Arr / Str / num / val
-    Obj    = "{ " (memb (" , " memb)*)? " }"
-    memb   = Str " : " value
-    Arr    = "[ " (value (" , " value)*)? " ]"
+    Obj    = '{'_ (memb (','_ memb)*)? '}'
+    memb   = Str _ ':' _ value _
+    Arr    = '['_ (value _ (','_ value _)*)? ']'
     Str    = '"' chars* '"'
     chars  = ~[\u0000-\u001F"\\]+ / '\\' esc
     esc    = ["\\/bfnrt] / 'u' [0-9a-fA-F]*4
@@ -308,9 +296,10 @@ A pPEG JSON parser is a useful example since JSON is so widely known and has a w
     _int   = '-'? [1-9] [0-9]* / '-'? '0' 
     _frac  = '.' [0-9]+
     _exp   = [eE] [+-]? [0-9]+
-    val    = "true" / "false" / "null" 
+    val    = 'true' / 'false' / 'null'
+    _      = [ \t\n\r]* 
 
-The pPEG grammar language enables the published JSON grammar specification to be reduced from 22 multi-line CFG rules down to 13 one-line pPEG rules. 
+The pPEG grammar language enables the published JSON grammar specification to be reduced from 22 multi-line CFG rules down to 14 one-line pPEG rules. 
 
 The `json` rule name and the `value` rule name both name a single component result, so these rule names are redundant in the parse tree, and they will not appear in any results. The JSON parse tree root will be one of the `value` alternatives.
 
@@ -347,14 +336,15 @@ The primary motivation for the pPEG `<extn>` feature is for syntax that is beyon
 
 For example, in the JSON grammar the `num` rule returns a string that must be translated into a numeric data type in the programming language, and similarly for a string type. For these rules custom functions could be used to translate the input string directly into a programming language data type:  
 
-    json   = " " value " "
+    json   = _ value _
     value  = Obj / Arr / str / num / val
-    Obj    = "{ " (memb (" , " memb)*)? " }"
-    memb   = str " : " value
-    Arr    = "[ " (value (" , " value)*)? " ]"
+    Obj    = '{'_ (memb (','_ memb)*)? '}'
+    memb   = str _ ':' _ value _
+    Arr    = '['_ (value _ (','_ value _)*)? ']'
     str    = <string>
     num    = <number>
-    val    = "true" / "false" / "null"
+    val    = 'true' / 'false' / 'null'
+    _      = [ \t\n\r]* 
 
 The `<string>` and `<number>` identify custom parser functions implemented in the host programming language.
 

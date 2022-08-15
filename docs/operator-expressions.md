@@ -114,15 +114,16 @@ The `var` rule can be extended to allow identifiers (or other things):
 
 Other operators can be slotted into precedence order, and white-space can be allowed before or after any expression or operator:
 
-    exp = " " sub " "
-    sub = add (" - " add)*
-    add = div (" + " div)*
-    div = mul (" / " mul)*
-    mul = pow (" * " pow)*
-    pow = var (" ^ " var)*
-    var = val / id / "(" exp ")"
-    val = [0-9]+
-    id  = [a-z]+
+    exp = _ sub _
+    sub = add ('-'_ add)*
+    add = div ('+'_ div)*
+    div = mul ('/'_ mul)*
+    mul = pow ('*'_ pow)*
+    pow = var ('^'_ var)*
+    var = val / id / '(' exp ')'_
+    val = [0-9]+ _
+    id  = [a-z]+ _
+    _   = [ \t\n\r]*
 
     "x+y^2" => ["add", [["id", "x"], ["pow", [["id", "y"], ["val", "2"]]]]]
 
@@ -140,7 +141,7 @@ Let's start again, but this time with the with the objective of using a minimal 
 For example:
 
     expr = val (op val)*
-    op   = " + " / " - "
+    op   = '+' / '-'
     val  = [0-9]+
 
     "1" ==> ["val", 1]
@@ -167,11 +168,12 @@ The next step is to allow operators with different precedence and associativity.
 For example:
 
     expr  = val (op val)*
-    op    = " " (op_1L / op_2L / op_3R) " "
-    val   = [0-9]+
+    op    = (op_1L / op_2L / op_3R) _
+    val   = [0-9]+ _
     op_1L = [-+]
     op_2L = [*/]
     op_3R = '^'
+    _     = [ \t\n\r]*
 
 The rule names label the operators with their binding power and associativity, which enables the parse tree to be transformed inot a function form:
 
@@ -189,19 +191,20 @@ The parse tree transform may be done after the parser has built a complete parse
 
 For example, here is the grammar for the operator expressions of the GO-language. There are 19 operators (plus two prefix operatos) in five precedence levels:
 
-    exp   = " " opx " "
+    exp   = _ opx _
     opx   = pre (op pre)* <infix>
-    pre   = pfx? var
-    var   = val / id / "(" exp ")"
+    pre   = pfx? var _
+    var   = val / id / '(' exp ')'_
     val   = [0-9]+
     id    = [a-z]+
     pfx   = [-+]
-    op    = " " (op_1L/op_2L/op_4L/op_5L/op_3L) " "
+    op    = _ (op_1L/op_2L/op_4L/op_5L/op_3L) _
     op_1L = '||'
     op_2L = '&&'
     op_3L = '<'/'>'/'>='/'<='/'=='/'!='
     op_4L = [-+|^]
     op_5L = [*/%&]/'<<'/'>>'/'&^'
+    _     = [ \t\n\r]*
 
 The `<infix>` function is an amazingly simple way to parse all kinds of operator expressions and generate a nice functional form parse tree.
  

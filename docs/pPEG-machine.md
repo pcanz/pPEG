@@ -395,23 +395,23 @@ We can now move on from the `date` grammar to the pPEG grammar itself.
 We will start with this minimal PEG grammar that is just sufficient to define itself. 
 
     const boot_grammar = `
-        Peg   = " " (rule " ")+
-        rule  = id " = " alt
+        Peg   = _ rule+ _
+        rule  = id _'='_ alt
 
-        alt   = seq (" / " seq)*
+        alt   = seq (_'/'_ seq)*
         seq   = rep (' ' rep)*
         rep   = pre sfx?
         pre   = pfx? term
-        term  = id / sq / dq / chs / group
+        term  = id / sq / chs / group
 
         id    = [a-zA-Z_]+
         pfx   = [&!~]
         sfx   = [+?*]
 
-        sq    = "'" ~"'"* "'"
-        dq    = '"' ~'"'* '"'
+        sq    = ['] ~[']* [']
         chs   = '[' ~']'* ']'
-        group = "( " alt " )"
+        group = '('_ alt ')'_
+        _     = [ \t\n\r]*
     `;
 
 It would be nice to have a smaller self-definition, but trying to eliminate any more features makes the definition harder to express and more verbose.
@@ -433,19 +433,21 @@ Once a full pPEG implementation is available it can be used to parse a full PEG 
 
 But let's see how we can get there from scratch.
 
-Here is a hand translation for the minimal PEG grammar:
+Here is a hand translation for a minimal PEG grammar:
 
-    // Peg   = " " (rule " ")+
+    // Peg   = _ rule+ _
     ["rule",[["id","Peg"],
-        ["seq",[["dq","\" \""], ["rep",[
-            ["seq",[["id","rule"], ["dq","\" \""]]], ["sfx","+"]]]]]]],
-    // rule  = id " = " alt
+        ["seq",[["id","_"], ["rep",[["id","rule"],["sfx",'+"]],
+            ["id","_"]]]]],
+    // rule  = id _'='_ alt
     ["rule",[["id","rule"],
-        ["seq",[["id","id"],["dq","\" = \""],["id","alt"]]]]],
-    // alt   = seq (" / " seq)*
+        ["seq",[["id","id"],["id","_"],["sq","'='"],
+            ["id","_"],["id","alt"]]]]],
+    // alt   = seq (_'/'_ seq)*
     ["rule",[["id","alt"],
         ["seq",[["id","seq"],
-            ["rep",[["seq",[["dq","\" / \""],["id","seq"]]],["sfx","*"]]]]]]],
+            ["rep",[["seq",[["id","_"],["sq","'/'"],["id","_"],
+                ["id","seq"]]],["sfx","*"]]]]]]],
     // seq   = rep (' ' rep)*
     ["rule",[["id","seq"],
         ["seq",[["id","rep"],
@@ -481,24 +483,28 @@ Here is a hand translation for the minimal PEG grammar:
     // chs   = '[' ~']'* ']'
     ["rule",[["id","chs"],
         ["seq",[["sq","'['"],
-
             ["rep",[["pre",[["pfx","~"],["sq","']'"]]],["sfx","*"]]],
             ["sq","']'"]]]]],
-    // group = "( " alt " )"
+    // group = '('_ alt _')'
     ["rule",[["id","group"],
-        ["seq",[["dq","\"( \""],["id","alt"],["dq","\" )\""]]]]]] 
+        ["seq",[["sq","'('"],["id","_"],["id","alt"],
+            ["id","_"],["sq","')'"]]]]],
+    // _  = [ \t\n\r]*
+    ["rule",[["id","_"],
+        ["rep",[["chs","[ \t\n\r]"],["sfx","*"]]]]]];
 
 Transformed into parser code:
     
     const boot_code = {
         "Peg":
-            ["seq",[["dq","\" \""], ["rep",[
-                ["seq",[["id","rule"], ["dq","\" \""]]], ["sfx","+"]]]]],
+            ["seq",[["id","_"],["rep",[["id","rule"],["sfx",'+"]],["id","_"]]],
         "rule":
-            ["seq",[["id","id"],["dq","\" = \""],["id","alt"]]],
+            ["seq",[["id","id"],["id","_"],["sq","'='"],
+                ["id","_"],["id","alt"]]],
         "alt":
             ["seq",[["id","seq"],
-                ["rep",[["seq",[["dq","\" / \""],["id","seq"]]],["sfx","*"]]]]],
+                ["rep",[["seq",[["id","_"],["sq","'/'"],["id","_"],
+                    ["id","seq"]]],["sfx","*"]]]]],
         "seq":
             ["seq",[["id","rep"],
                 ["rep",[["seq",[["sq","' '"],["id","rep"]]],["sfx","*"]]]]],
@@ -527,7 +533,10 @@ Transformed into parser code:
                 ["rep",[["pre",[["pfx","~"],["sq","']'"]]],["sfx","*"]]],
                 ["sq","']'"]]],
         "group":
-            ["seq",[["dq","\"( \""],["id","alt"],["dq","\" )\""]]],
+            ["seq",[["sq","'('"],["id","_"],["id","alt"],
+                ["id","_"],["sq","')'"]]],
+        "_":
+            ["rep",[["chs","[ \t\n\r]"],["sfx","*"]]]],
         "$start":
             ["id", "Peg"]
     }; 
@@ -556,12 +565,12 @@ The full pPEG grammar adds these features:
 *   An extension escape-hatch.
 
     const PEG_grammar = `      
-        Peg   = " " (rule " ")+
-        rule  = id " = " alt
+        Peg   = _ rule+ _
+        rule  = id _'='_ alt
 
-        alt   = seq (" / " seq)*
-        seq   = rep (" " rep)*
-        rep   = pre sfx?
+        alt   = seq ('/'_ seq)*
+        seq   = rep*
+        rep   = pre sfx? _
         pre   = pfx? term
         term  = call / sq / dq / chs / group / extn
     
@@ -576,15 +585,11 @@ The full pPEG grammar adds these features:
         sq    = "'" ~"'"* "'" 'i'?
         dq    = '"' ~'"'* '"' 'i'?
         chs   = '[' ~']'* ']'
-        group = "( " alt " )"
+        group = '('_ alt ')'
         extn  = '<' ~'>'* '>'
 
-        _space_ = ('#' ~[\n\r]* / [ \t\n\r]*)*
+        _     = ('#' ~[\n\r]* / [ \t\n\r]*)*
     `;
-
-The `_space_` rule is a special predefined rule name. If a rule with this name is defined then it is automatically called when the parser is matching white-space in a double-quoted string (with an enhanced `dq` instruction). 
-
-This mechanism allows a grammar to be defined with any kind of comment syntax. The grammar will skip over these comments, anywhere that white-space is matched.
 
 Notice that the PEG comments are defined using line-end escape code characters (`[\n\r]`). These escape codes are in the JavaScript source text for the grammar, the PEG grammar itself does not define any special escape codes of its own.
 
