@@ -69,7 +69,7 @@ In theory packrat memos are needed to avoid exponential performance.  But in pra
 
 The pPEG grammar rule names label the parse tree nodes that they generate. It is natural to employ rule names that denote a semantic meaning so that the parse tree can be read as a semantic markup of the input text.
 
-Anonymous matches (such as literal quotes) are eliminated and do not appear in the parse tree. The parser will also eliminate redundant nodes to simplify the parse tree. But the pPEG rule name conventions allow the grammar designer explicit control to include or exclude the generation of individul grammar rule results.
+Anonymous matches (such as literal quotes) are eliminated and do not appear in the parse tree. The parser will also eliminate redundant nodes to simplify the parse tree. But the pPEG rule name conventions allow the grammar designer explicit control to include or exclude the generation of individual grammar rule results.
 
 The pPEG grammar rules are syntax pattern recognizers. A parser can execute the grammar rules directly as instructions to match against an input string and generate a parse tree. The focus of the grammar design is on pattern matching of the input string to generate an SST (Semantic Syntax Tree), rather than on the derivation of a traditional AST (Abstract Syntax Tree). An SST is a type of AST that is simpler than a full blown CST (Concrete Parse Tree). 
 
@@ -80,14 +80,14 @@ For example, for this date grammar:
     month = [0-9]*2 
     day   = [0-9]*2
 
-The parse tree from parsing the input “2022-03-04” can be diplayed as:
+The parse tree from parsing the input “2022-03-04” can be displayed as:
 
 	date
 	├─year "2022"
 	├─month "03"
 	└─day "04"
 
-Or it may be diplayed as an XML markup:
+Or it may be displayed as an XML markup:
 
 	<date><year>2022</year>-<month>03</month>-<day>04</day></date>
 
