@@ -123,8 +123,6 @@ A pPEG grammar rule expression can be:
 
 The square brackets around a set of characters is similar to regex notation.
 
-Normal programming language escape codes may be used, pPEG does not define any special escape codes.
-
 If x and y are grammar expressions then:
 
     x y         will match a sequence of x followed by y, or fail
@@ -160,9 +158,7 @@ Implicit rule names all start with an underscore, followed by a capital letter o
 
         Implicit = '_' [A-Z0-9] [a-zA-Z0-9_-]*
 
-Implicit rules are the same as other rules, so because they start with an underscore they can only define an anonymous literal match.
-
-When writing a grammar it is best to avoid the use of grammar rule names that could have an implicit definition (i.e. names starting with an underscore followed by a capital letter or digit). Doing that will guarantee an error message if the definition of a rule name has been forgotten.
+When writing a grammar it is best to avoid defining grammar rule names that could have an implicit definition (i.e. names starting with an underscore followed by a capital letter or digit). Doing that will guarantee an error message if the definition of a rule name has been forgotten.
 
 But implicit rules names are just ordinary rule names that can be defined as usual. An explicit grammar rule definition will take precedence over any implicit definition.
 
@@ -180,14 +176,14 @@ Implicit character code rule names are particularly useful for control codes whi
 For example:
 
     _9  = '\t'   # Unicode 9 is a tab character
-    _A  = '\n'
-    _D  = '\r'
+    _A  = '\n'   # a line-feed character 
+    _D  = '\r'   # a carriage return character
 
 Implicit character code rule names may use a hyphen to define a range of character codes. For example:
 
     _0-FFFF = [\u0000-\uFFFF] 
 
-Implicit rule names that directly represent character codes should not be redefined. 
+Implicit rule names that directly represent character codes should not be redefined. Implicit rule names for character codes should be read as a literal names for character codes. 
 
 
 ### Other Implicit Rules
@@ -195,19 +191,19 @@ Implicit rule names that directly represent character codes should not be redefi
 In addition to the intrinsic character code rule names pPEG defines a few other implicit rule names:
 
     _TAB = _9
-    _LF  = _A
-    _CR  = _D
-    _BS  = _5C
-    _DQ  = _22
-    _BT  = _60
-    _ANY = _0-10FFFF
+    _LF  = _A               # Line Feed
+    _CR  = _D               # Carriage Return
+    _BS  = _5C              # \ back-slash
+    _DQ  = _22              # " double quote char
+    _BT  = _60              # ` back-tick quote
+    _ANY = _0-10FFFF        # matches any Unicode character
 
-    _EOL = _A-D
-    _WS  = _9-D / ' '
-    _NL  = _LF / _CR _LF?
-    _EOF = !_ANY
+    _EOL = _A-D             # End Of Line (_LF/_B/_C/_CR)
+    _WS  = _9-D / ' '       # White-Space
+    _NL  = _LF / _CR _LF?   # New Line conventions
+    _EOF = !_ANY            # End Of File, end of parse input
 
-    _    = _WS*
+    _    = _WS*             # match any white-space..
 
 The end-of-line rule `_EOL` matches `_CR` or `_LF`, but it will also match vertical-tab or form-feed characters, which are normally not used. 
 
@@ -299,7 +295,7 @@ Here is the pPEG definition of itself:
 
 This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
 
-The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. For simplicity and portability pPEG does not use double-quotes, back-tick, or backslash characters.
+The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. For simplicity and portability pPEG does not use double-quotes, back-tick, or back-slash escape characters.
 
 The prefix operator `~x` matches anything other than `x`. This can be used to match any character: `~[]`, eliminating the need for a special `.` to match any character. The `~` operator often provides a simpler way to express PEG rules.
 
