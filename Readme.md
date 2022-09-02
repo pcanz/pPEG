@@ -287,7 +287,7 @@ Here is the pPEG definition of itself:
     range = num ('..' num?)?
     num   = [0-9]+
 
-    call  = id !" ="
+    call  = id _ !'='
     id    = [a-zA-Z_] [a-zA-Z0-9_-]*
 
     quote = ['] sq ['] 'i'?
