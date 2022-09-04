@@ -295,7 +295,7 @@ Here is the pPEG definition of itself:
 
 This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
 
-The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. For simplicity and portability pPEG does not use double-quotes, back-tick, or back-slash escape characters.
+The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. Octal character codes are not used, and Unicode chars, not bytes, are matched. For simplicity and portability pPEG does not use double-quotes, or back-slash escape characters. 
 
 The prefix operator `~x` matches anything other than `x`. This can be used to match any character: `~[]`, eliminating the need for a special `.` to match any character. The `~` operator often provides a simpler way to express PEG rules.
 
