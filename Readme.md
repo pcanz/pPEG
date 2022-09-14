@@ -39,12 +39,12 @@ The first grammar is for a CSV (Comma Separated Value) format:
     const csv = peg.compile(`
         CSV     = Hdr Row+
         Hdr     = Row
-        Row     = field (',' field)* _EOL*
+        Row     = field (',' field)* '\r'? '\n'
         field   = _string / _text / ''
 
+        _text   = ~[,\n\r]+
         _string = '"' (~'"' / '""')* '"'
-        _text   = ~(',' / _EOL)+
-    `); // _EOL matches end-of-line characters.
+    `);
 
     const test = `A,B,C
     a1,b1,c1
@@ -80,8 +80,9 @@ Here is another example, a grammar for [s-expressions], this time in Python:
     sexp = pPEG.compile("""
         list  = _ '(' elem* ')' _
         elem  = list / atom _
-        atom  = ~('(' / ')' / _WS)+
-    """) # _WS matches white-space characters.
+        atom  = ~[() \t\n\r]+
+        _     = [ \t\n\r]*
+    """)
 
     test = """
         (foo bar (blat 42) (f(g(x))))
@@ -98,7 +99,7 @@ Here is another example, a grammar for [s-expressions], this time in Python:
             ["list",[["atom","g"],["atom","x"]]]]]]]
     """
 
-This three line grammar defines atoms as text symbols, but it could easily be extended with string and number types. A hand written program to implement a parser for this grammar would need to use recursive descent.
+This three line grammar defines atoms as text symbols, but it could easily be extended with string and number types. A hand written program to implement a parser for this grammar requires more than a regex.
 
 These examples should illustrate the general idea, now for the details.
 
@@ -107,9 +108,9 @@ These examples should illustrate the general idea, now for the details.
 
 A pPEG grammar rule expression can be:
 
-    name        to match a named grammar rule, or an implicit rule
+    name        to match a named grammar rule, or a character code
 
-    'abc'       to match a string of characters    
+    'abc'       to match a string of characters
     'abc'i      to match a case-insensitive string of characters
 
     ''          to match an empty string, and consume no input
@@ -150,119 +151,6 @@ The expression: `~[abc]` is the same as the regex notation: `[^abc]`, but pPEG d
 
 The `<extend>` notation is an escape-hatch that allows a grammar to be extended with custom programming language parser functions. Extension functions may occasionally be needed to define gnarly syntax that is beyond the power of a Context Free Grammar, or any syntax that could not be defined with PEG grammar rules.
 
-##   Implicit Rules
-
-It is usually an error for a grammar to use a rule name that is not defined in the grammar. The exception is implicit rule names that have pre-defined built-in definitions.
-
-Implicit rule names all start with an underscore, followed by a capital letter or a digit:
-
-        Implicit = '_' [A-Z0-9] [a-zA-Z0-9_-]*
-
-When writing a grammar it is best to avoid defining grammar rule names that could have an implicit definition (i.e. names starting with an underscore followed by a capital letter or digit). Doing that will guarantee an error message if the definition of a rule name has been forgotten.
-
-But implicit rules names are just ordinary rule names that can be defined as usual. An explicit grammar rule definition will take precedence over any implicit definition.
-
-
-###  Implicit Character Codes
-
-All Unicode character codes can be identified with an implicit rule name. These names are literally interpreted as the hexadecimal value for a character code.
-
-For example, the rule name `_1234` implicitly matches the Unicode hex value `1234`, as if it had been defined with a string escape code like this:
-
-    _1234 = '\u1234'
-
-Implicit character code rule names are particularly useful for control codes which can not otherwise be defined in a pPEG grammar without the help of programming language string escape codes. 
-
-For example:
-
-    _9  = '\t'   # Unicode 9 is a tab character
-    _A  = '\n'   # a line-feed character 
-    _D  = '\r'   # a carriage return character
-
-Implicit character code rule names may use a hyphen to define a range of character codes. For example:
-
-    _0-FFFF = [\u0000-\uFFFF] 
-
-Implicit rule names that directly represent character codes should not be redefined. Implicit rule names for character codes should be read as a literal names for character codes. 
-
-
-### Other Implicit Rules
-
-In addition to the intrinsic character code rule names pPEG defines a few other implicit rule names:
-
-    _TAB = _9
-    _LF  = _A               # Line Feed
-    _CR  = _D               # Carriage Return
-    _BS  = _5C              # \ back-slash
-    _DQ  = _22              # " double quote char
-    _BT  = _60              # ` back-tick quote
-    _ANY = _0-10FFFF        # matches any Unicode character
-
-    _EOL = _A-D             # End Of Line (_LF/_B/_C/_CR)
-    _WS  = _9-D / ' '       # White-Space
-    _NL  = _LF / _CR _LF?   # New Line conventions
-    _EOF = !_ANY            # End Of File, end of parse input
-
-    _    = _WS*             # match any white-space..
-
-The end-of-line rule `_EOL` matches `_CR` or `_LF`, but it will also match vertical-tab or form-feed characters, which are normally not used. 
-
-The `_WS` rule for white-space will match a space character or control characters for tab and the end-of-line codes.  It only matches ASCII white-space, and not other Unicode white-space category characters. A grammar can define its own white-space rule if that is required.
-
-By convention the underscore rule `_` is used to match white-space. For convenience it is defined to match the same as `_WS*` (any number of white-space characters). This is a useful default, but it is expected that grammars will often define their own `_` rule for specific white-space matching.
-
-Additional implicit rule names, such as for Unicode categories, may be added in the future. Adding additional implicit rule names in the future will not create any problems with backward compatibility because explicit grammar rule definitions will always take precedence over any implicit definitions.
-
-
-##  Escape Codes
-
-The use of implicit rule names allows pPEG grammars to be written without the use of string escape codes. This allows grammars to be copied verbatim from quoted strings into raw strings, or into text files.
-
-In the pPEG grammar itself the space-separator `_` rule is the only rule that requires control codes:
-
-    _ = ([ \t\n\r]+ / '#' ~[\n\r]*)*
-
-With implicit rule names if can be defined without escape codes:
-
-    _ = (_WS+ / '#' ~_EOL*)*
-
-For pPEG grammar portability it is best to avoid the use of escape codes. If a grammar is written in a programming language as a quoted string literal value, then escape codes may be used. But this use of escape codes is only to express the text of the grammar. The escape codes are a programming language encoding notation that has no significance in the actual pPEG grammar text string. 
-
-
-##  Portable Grammars
-
-If a grammar is expressed in a raw string, or in a text file, then there are no escapes codes. This makes for easy to read grammar rules.
-
-For example, here is a fragment of the JSON grammar:
-    
-    Str    = '"' chars* '"'
-    chars  = ~(_0-1F / '\' / '"')+ / '\' esc
-    esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
-
-It is natural to write literal back-slash and quote characters. The use of an implicit rule name for the character range in the `chars` rule also looks reasonably natural and obvious.
-
-But if this grammar is ported into a C style string then it will need to be modified to escape the backslash and quote characters:
-
-    "    Str    = '\"' chars* '\"'                  \n"
-    "    chars  = ~(_0-1F/'\\'/'\"')+ / '\\' esc    \n"
-    "    esc    = [\"\\/bfnrt] / 'u' [0-9a-fA-F]*4  \n"
-
-To be able to port the grammar verbatim it needs to be written without any literal quote or back-slash characters, like this:
-
-    Str    = _DQ chars* _DQ
-    chars  = ~(_0-1F / _BS / _DQ)+ / _BS esc
-    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4
-
-Or using implicit rules to directly express character codes:
-
-    Str    = _22 chars* _22
-    chars  = ~(_0-1F/_5C/_22)+ / _5C esc
-    esc    = [/bfnrt] / _5C / _22 / 'u' [0-9a-fA-F]*4
-
-The implicit rules are not quite as nice and easy to read as the literal characters, but it does have the merit or being directly portable. Of course this is a worst case example, most grammar rules do not require back-slash or double quote characters.
-
-If a grammar is intended as a standard specification where verbatim portability is important, then eliminating the use of literal quote marks and back-slash characters is worthwhile. But for other grammars this will be a minor detail and a stylistic preference.
-
 
 ##  The pPEG Grammar Grammar
 
@@ -275,27 +163,25 @@ Here is the pPEG definition of itself:
     seq   = rep*
     rep   = pre sfx? _
     pre   = pfx? term
-    term  = call / quote / chars / group / extn
+    term  = call / sq / chs / group / extn
  
     group = '('_ alt ')'
-    pfx   = [~!&]
+    pfx   = [&!~]
     sfx   = [+?] / '*' range?
-    range = num ('..' num?)?
+    range = num (dots num?)?
     num   = [0-9]+
+    dots  = '..'
 
     call  = id _ !'='
     id    = [a-zA-Z_] [a-zA-Z0-9_-]*
-
-    quote = ['] sq ['] 'i'?
-    sq    = ~[']*
-    chars = '[' chs ']'
-    chs   = ~']'*
+    sq    = ['] ~[']* ['] 'i'?
+    chs   = '[' ~']'* ']'
     extn  = '<' ~'>'* '>'
-    _     = (_WS+ / '#' ~_EOL*)*
+    _     = ('#' ~[\n\r]* / [ \t\n\r]+)*
 
 This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
 
-The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. Octal character codes are not used, and Unicode chars, not bytes, are matched. For simplicity and portability pPEG does not use double-quotes, or back-slash escape characters. 
+The use of `=` in rule definitions instead of `<-` is a cosmetic style choice. For simplicity and portability double quotes are not used. 
 
 The prefix operator `~x` matches anything other than `x`. This can be used to match any character: `~[]`, eliminating the need for a special `.` to match any character. The `~` operator often provides a simpler way to express PEG rules.
 
@@ -355,6 +241,7 @@ Here is one way to write a grammar for arithmetic expressions:
     grp = '(' exp ')'
     sym = [a-zA-Z]+
     num = [0-9]+
+    _   = [ \t\n\r]*
 
 A separate grammar rule has been defined for each operator in order to demonstrate how pPEG generates minimal ptree results. 
 
@@ -379,6 +266,8 @@ Another example, parsing: `x^2^3-1`
     │ └─num "3"
     └─num "1"
 
+Or in JSON format:
+
     ["sub",[["pow",[["sym","x"],["num","2"],["num","3"]]],["num","1"]]]
 
 Only the relevant rule names appear in the ptree result, all redundant rule names and literal matches are eliminated. The default ptree construction works well here and only lower case rule names are needed.
@@ -399,7 +288,7 @@ The corresponding ptree is:
 
 The `add` rule name can label a host programming language function that defines how the argument list will be evaluated. Most of the arithmetic operators are left associative and will use a left list reduction, but the `pow` exponential operator can use a right reduction to evaluate its arguments.
 
-To reduce the number of rules each operator rule could match a group of operators with the same precedence and associativity. But a better way to deal with a larger number of operators is to extend the pPEG grammar with a version of the Pratt parser algorithm as explained in [Operator Expressions].
+To reduce the number of rules each operator rule could match all operators with the same precedence and associativity. But a better way to deal with a larger number of operators is to extend the pPEG grammar with a version of the Pratt parser algorithm as explained in [Operator Expressions].
 
 
 ##  JSON Grammar Example
@@ -411,18 +300,19 @@ A pPEG JSON parser is a useful example since JSON is so widely known and has a w
     json   = value
     value  = _ (Obj / Arr / Str / num / val) _
     Obj    = '{'_ (memb (','_ memb)*)? '}'
-    memb   = Str _ ':' value
-    Arr    = '[' (value (',' value)*)? ']'
+    memb   = Str _ ':' _ value
+    Arr    = '['_ (value (','_ value)*)? ']'
     Str    = '"' chars* '"'
-    chars  = ~(_0-1F / '"' / '\')+ / '\' esc
+    chars  = ~(_00-1F / '"' / '\')+ / '\' esc
     esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
     num    = _int _frac? _exp?
     _int   = '-'? [1-9] [0-9]* / '-'? '0' 
     _frac  = '.' [0-9]+
     _exp   = [eE] [+-]? [0-9]+
     val    = 'true' / 'false' / 'null'
+    _      = [ \t\n\r]* 
 
-The pPEG grammar language enables the published JSON grammar specification to be reduced from 22 multi-line CFG rules down to 13 one-line pPEG rules. 
+The pPEG grammar language enables the published JSON grammar specification to be reduced from 22 multi-line CFG rules down to 14 one-line pPEG rules. 
 
 The `json` rule name and the `value` rule name both name a single component result, so these rule names are redundant in the parse tree, and they will not appear in any results. The JSON parse tree root will be one of the `value` alternatives.
 
@@ -462,11 +352,12 @@ For example, in the JSON grammar the `num` rule returns a string that must be tr
     json   = value
     value  = _ (Obj / Arr / str / num / val) _
     Obj    = '{'_ (memb (','_ memb)*)? '}'
-    memb   = str _ ':' value
-    Arr    = '[' (value (',' value)*)? ']'
+    memb   = str _ ':' _ value
+    Arr    = '['_ (value (','_ value)*)? ']'
     str    = <string>
     num    = <number>
     val    = 'true' / 'false' / 'null'
+    _      = [ \t\n\r]* 
 
 The `<string>` and `<number>` identify custom parser functions implemented in the host programming language.
 
@@ -484,6 +375,72 @@ The ptree format has been illustrated here as a JSON structure because JSON is a
 In practice a small compiler step can be used to translate a pPEG grammar ptree into the actual parser machine instruction functions. The compiler step enables semantic errors in the grammar to be detected and reported, and it allows the ptree expression to be translated into a format that the parser machine can execute more efficiently.
 
 Programmers using pPEG do not need to know the details of the parser machine. The details for how to implement a pPEG parser are covered in a separate document: [The pPEG Machine].
+
+
+###  Implicit Character Code Rule Names
+
+Unicode character codes can be identified with an implicit rule name. These names are literally interpreted as the hexadecimal value for a character code.
+
+For example, the rule name `_1234` implicitly matches the Unicode hex value `1234`, as if it had been defined with a string escape code like this:
+
+    _1234 = '\u1234'
+
+Implicit character code rule names start with an `_` followed by hex digits `[0-9A-F]+`. They are rule names that do not have to be defined, they match the hex code that they name.
+
+Implicit character code rule names are particularly useful for control codes which could not otherwise be defined in a pPEG grammar without the help of programming language string escape codes. 
+
+For example:
+
+    _9  = '\t'   # Unicode 9 is a tab character
+    _A  = '\n'   # a line-feed character 
+    _D  = '\r'   # a carriage return character
+
+Implicit character code rule names may use a hyphen to define a range of character codes. For example:
+
+    _0-FFFF = [\u0000-\uFFFF] 
+
+Implicit rule names that directly represent character codes can not be redefined.
+
+
+##  Portability
+
+The pPEG grammar source text can contain any Unicode characters, but the character encoding is a programming language implementation decision. Many modern programming languages use UTF-8, but some popular languages use UTF-16.
+
+A grammar text may be written in a quoted string with back-slash escape codes, or in a raw string without any escape codes, or as plain text in a file. Ideally the grammar text should not require any changes when ported between these different representations.
+
+For example, this rule for white-space can be used in any representation:
+
+    _ = [ \t\n\r]*
+ 
+If this rule is written in a programing language string with escape codes then pPEG will see the ASCII control code characters. If it is written in a plain text file then the pPEG compiler will see the escape codes and translate them into control code characters. The pPEG grammar compiler is only required to translate these three escape codes. Implicit character code rule names can be used to match any characters that would otherwise require escape codes.
+
+The pPEG grammar does not rely on double quote, back-tick, or back-slash characters for any grammar features. Using these characters in a grammar as literal quotes may require escape codes if the representation is changed.
+
+For example, here is a plain text fragment of the JSON grammar:
+    
+    Str    = '"' chars* '"'
+    chars  = ~(_00-1F / '\' / '"')+ / '\' esc
+    esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
+
+It is natural to write literal quoted back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be editied to escape the backslash and quote characters:
+
+    "    Str    = '\"' chars* '\"'                       \n"
+    "    chars  = ~(_00-1F / '\\' / '\"')+ / '\\' esc    \n"
+    "    esc    = [\"\\/bfnrt] / 'u' [0-9a-fA-F]*4       \n"
+
+C-style strings can not contain a zero character code, but the control characters have been expressed using an implicit character code rule name so a zero will not appear in the C-string.
+
+To be able to port the grammar without any editing it would need to be written without any literal double-quote or back-slash characters, for example:
+
+    Str    = _DQ chars* _DQ
+    chars  = ~(_CTL / _BS / _DQ)+ / _BS esc
+    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4
+
+    _DQ    = _22     # " Double-Quote
+    _BS    = _5C     # \ Back-Slash
+    _CTL   = _00-1F  # ASCII control codes
+
+The parse tree structure is defined in terms of JSON for portability, but only JSON strings and arrays are used, and how these are implemented depends on the host programming language.
 
 
 ##  Conclusion
