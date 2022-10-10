@@ -151,6 +151,24 @@ The expression: `~[abc]` is the same as the regex notation: `[^abc]`, but pPEG d
 
 The `<extend>` notation is an escape-hatch that allows a grammar to be extended with custom programming language parser functions. Extension functions may occasionally be needed to define gnarly syntax that is beyond the power of a Context Free Grammar, or any syntax that could not be defined with PEG grammar rules.
 
+##  Escape Codes
+
+Characters in a pPEG quoted string, or in a square brackets character-set, may be represented using an escape code.
+
+A small sub-set of standard programming language esacpe codes is supported:
+
+    \t           \u0009 tab
+    \n           \u000A LF
+    \r           \u000D CR
+    \u1234       4 hex digits
+    \U12345678   8 hex digits
+
+A backslach character followed by any other character(s) is simply a literal backslash character.
+
+For portability a pEG grammar should not use any other escape codes, even when a programming language string might allow other escape codes.
+
+In pPEG the backslash character can not be used to escape itself (and this is never required to write a pPEG grammar). Not using a backslash to escape itself removes some potential for errors when porting a grammar from a string that supports these escapes into a raw string that does not.
+
 
 ##  The pPEG Grammar Grammar
 
@@ -377,31 +395,6 @@ In practice a small compiler step can be used to translate a pPEG grammar ptree 
 Programmers using pPEG do not need to know the details of the parser machine. The details for how to implement a pPEG parser are covered in a separate document: [The pPEG Machine].
 
 
-###  Implicit Character Code Rule Names
-
-Unicode character codes can be identified with an implicit rule name. These names are literally interpreted as the hexadecimal value for a character code.
-
-For example, the rule name `_1234` implicitly matches the Unicode hex value `1234`, as if it had been defined with a string escape code like this:
-
-    _1234 = '\u1234'
-
-Implicit character code rule names start with an `_` followed by hex digits `[0-9A-F]+`. They are rule names that do not have to be defined, they match the hex code that they name.
-
-Implicit character code rule names are particularly useful for control codes which could not otherwise be defined in a pPEG grammar without the help of programming language string escape codes. 
-
-For example:
-
-    _9  = '\t'   # Unicode 9 is a tab character
-    _A  = '\n'   # a line-feed character 
-    _D  = '\r'   # a carriage return character
-
-Implicit character code rule names may use a hyphen to define a range of character codes. For example:
-
-    _0-FFFF = [\u0000-\uFFFF] 
-
-Implicit rule names that directly represent character codes can not be redefined.
-
-
 ##  Portability
 
 The pPEG grammar source text can contain any Unicode characters, but the character encoding is a programming language implementation decision. Many modern programming languages use UTF-8, but some popular languages use UTF-16.
@@ -412,35 +405,35 @@ For example, this rule for white-space can be used in any representation:
 
     _ = [ \t\n\r]*
  
-If this rule is written in a programing language string with escape codes then pPEG will see the ASCII control code characters. If it is written in a plain text file then the pPEG compiler will see the escape codes and translate them into control code characters. The pPEG grammar compiler is only required to translate these three escape codes. Implicit character code rule names can be used to match any characters that would otherwise require escape codes.
+If this rule is written in a programing language string with escape codes then pPEG will see the ASCII control code characters. If it is written in a plain text file then the pPEG compiler will see the escape codes and translate them into control code characters.
 
-The pPEG grammar does not rely on double quote, back-tick, or back-slash characters for any grammar features. Using these characters in a grammar as literal quotes may require escape codes if the representation is changed.
+The pPEG grammar does not rely on double-quote, back-tick, or back-slash characters for any grammar features. Using these characters in a grammar may require the grammar to be edited with escape codes when the grammar is ported into some programming language.
 
 For example, here is a plain text fragment of the JSON grammar:
     
     Str    = '"' chars* '"'
-    chars  = ~(_00-1F / '\' / '"')+ / '\' esc
+    chars  = ~([\u0000-\u001F"\])+ / '\' esc
     esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
 
-It is natural to write literal quoted back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be editied to escape the backslash and quote characters:
+It is natural to use literal quotes for back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be editied to escape the backslash and quote characters:
 
-    "    Str    = '\"' chars* '\"'                       \n"
-    "    chars  = ~(_00-1F / '\\' / '\"')+ / '\\' esc    \n"
-    "    esc    = [\"\\/bfnrt] / 'u' [0-9a-fA-F]*4       \n"
-
-C-style strings can not contain a zero character code, but the control characters have been expressed using an implicit character code rule name so a zero will not appear in the C-string.
+    "    Str    = '\"' chars* '\"'                        \n"
+    "    chars  = ~([\\u0000-\\u001F\"\\])+ / '\\' esc    \n"
+    "    esc    = [\"\\/bfnrt] / 'u' [0-9a-fA-F]*4        \n"
 
 To be able to port the grammar without any editing it would need to be written without any literal double-quote or back-slash characters, for example:
 
-    Str    = _DQ chars* _DQ
-    chars  = ~(_CTL / _BS / _DQ)+ / _BS esc
-    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4
+    "    Str    = _DQ chars* _DQ                             \n"
+    "    chars  = ~(_CTL / _BS / _DQ)+ / _BS esc             \n"
+    "    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4   \n"
 
-    _DQ    = _22     # " Double-Quote
-    _BS    = _5C     # \ Back-Slash
-    _CTL   = _00-1F  # ASCII control codes
+    "    _DQ    = '\u0022'          # " Double-Quote         \n"
+    "    _BS    = '\u005C'          # \ Back-Slash           \n"
+    "    _CTL   = [\\u0000-\u001F]  # ASCII control codes    \n"
 
-The parse tree structure is defined in terms of JSON for portability, but only JSON strings and arrays are used, and how these are implemented depends on the host programming language.
+This not fully portable, the zero code still requires a double escape to avoid a zero in the C string.
+
+For portability the parse tree structure is represented as JSON, but only JSON strings and arrays are used, and how these are implemented depends on the host programming language.
 
 
 ##  Conclusion
