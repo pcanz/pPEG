@@ -155,7 +155,7 @@ The `<extend>` notation is an escape-hatch that allows a grammar to be extended 
 
 Characters in a pPEG quoted string, or in a square brackets character-set, may be represented using an escape code.
 
-A small sub-set of standard programming language esacpe codes is supported:
+A small sub-set of standard programming language escape codes is supported:
 
     \t           \u0009 tab
     \n           \u000A LF
@@ -163,7 +163,7 @@ A small sub-set of standard programming language esacpe codes is supported:
     \u1234       4 hex digits
     \U12345678   8 hex digits
 
-A backslach character followed by any other character(s) is simply a literal backslash character.
+A backslash character followed by any other character(s) is simply a literal backslash character.
 
 For portability a pEG grammar should not use any other escape codes, even when a programming language string might allow other escape codes.
 
@@ -415,7 +415,7 @@ For example, here is a plain text fragment of the JSON grammar:
     chars  = ~([\u0000-\u001F"\])+ / '\' esc
     esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
 
-It is natural to use literal quotes for back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be editied to escape the backslash and quote characters:
+It is natural to use literal quotes for back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be edited to escape the backslash and quote characters:
 
     "    Str    = '\"' chars* '\"'                        \n"
     "    chars  = ~([\\u0000-\\u001F\"\\])+ / '\\' esc    \n"
@@ -423,15 +423,14 @@ It is natural to use literal quotes for back-slash and quote characters. But if 
 
 To be able to port the grammar without any editing it would need to be written without any literal double-quote or back-slash characters, for example:
 
-    "    Str    = _DQ chars* _DQ                             \n"
-    "    chars  = ~(_CTL / _BS / _DQ)+ / _BS esc             \n"
-    "    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4   \n"
+    Str    = _DQ chars* _DQ                          
+    chars  = ~(_CTL / _BS / _DQ)+ / _BS esc          
+    esc    = [/bfnrt] / _BS / _DQ / 'u' [0-9a-fA-F]*4
+    _DQ    = '\u0022'     
+    _BS    = '\u005C'      
+    _CTL   = [\u0000-\u001F] 
 
-    "    _DQ    = '\u0022'          # " Double-Quote         \n"
-    "    _BS    = '\u005C'          # \ Back-Slash           \n"
-    "    _CTL   = [\\u0000-\u001F]  # ASCII control codes    \n"
-
-This not fully portable, the zero code still requires a double escape to avoid a zero in the C string.
+This is portable into a C string with one exception. The zero character code will require a double escape to avoid a zero in the C string.
 
 For portability the parse tree structure is represented as JSON, but only JSON strings and arrays are used, and how these are implemented depends on the host programming language.
 
