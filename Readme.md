@@ -415,7 +415,7 @@ For example, here is a plain text fragment of the JSON grammar:
     chars  = ~([\u0000-\u001F"\])+ / '\' esc
     esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
 
-It is natural to use literal quotes for back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be edited to escape the backslash and quote characters:
+It is natural to quote back-slash and quote characters. But if this grammar is ported into a C-style string then it will need to be edited to escape the backslash and quote characters:
 
     "    Str    = '\"' chars* '\"'                        \n"
     "    chars  = ~([\\u0000-\\u001F\"\\])+ / '\\' esc    \n"

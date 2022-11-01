@@ -1,22 +1,22 @@
 #   Pratt Parsing Deconstructed
 
-A very neat and powerful parser algorith was published back in 1973 by Vaughn Pratt[^1], but for many years this method has been largley ingnored. 
+A very neat and powerful parser algorithm was published back in 1973 by Vaughn Pratt[^1], but for many years this method has been largely ignored. 
 
 Pratt claimed his technique is trivial to implement, easy to use, extremely efficient, and very flexible. Why then is it not better known? 
 
 Pratt suggested that a preoccupation with BNF grammars and their various offspring, along with their related automata and theorems, has precluded development in directions that are not visibly in the domain of automata theory.
 
-Fortunatley there has been a revival of interest more recently, and there are nice blog posts by [matklad] and [Nystrom] that explain how it works. Another variant that is closer to the original Pratt paper has been popularised by Douglas [Crockford], and there is also a [survey] of other posts.
+Fortunately there has been a revival of interest more recently, and there are nice blog posts by [matklad] and [Nystrom] that explain how it works. Another variant that is closer to the original Pratt paper has been popularized by Douglas [Crockford], and there is also a [survey] of other posts.
 
-I must admit that I found Pratt's paper hard to follow, but the key idea of using numeric binding powers for each operator was cystal clear. I ended up implementing the Pratt algorithm in a slightly different way, and that may be easier to understand and explain. So here it is.
+I must admit that I found Pratt's paper hard to follow, but the key idea of using numeric binding powers for each operator was crystal clear. I ended up implementing the Pratt algorithm in a slightly different way that may be easier to understand and explain. So here it is.
 
 ##  The Problem
 
-The problem is how to parse an operator expression. I'll stick to simple arithemtic expressions like `1+2*3`. The problem boils down to how to put the brackets in correctly. Should it be `((1+(*3))` or should it be `(1+(2*3))`? For arithmetic the correct answer is `(1+(2*3))`.
+The problem is how to parse an operator expression. I'll stick to simple arithmetic expressions like `1+2*3`. The problem boils down to how to put the brackets in correctly. Should it be `((1+(*3))` or should it be `(1+(2*3))`? For arithmetic the correct answer is `(1+(2*3))`.
 
-An even simpler problem is how to add up a list of numbers, say `1+2+3+4`, in this case you can add from the left: `(((1+2)+3)+4)` or you can add from the right: `(1+(2+(3+4)))` it makes no difference, they bopth produce the same answer. But not so with with subtraction, `(((1-2)-3)-4)` is not the same as `(1-(2-(3-4)))`.
+An even simpler problem is how to add up a list of numbers, say `1+2+3+4`, in this case you can add from the left: `(((1+2)+3)+4)` or you can add from the right: `(1+(2+(3+4)))` it makes no difference, they both produce the same answer. But not so with with subtraction, `(((1-2)-3)-4)` is not the same as `(1-(2-(3-4)))`.
 
-For most aithmetic operators starting from the left and going step by step to the right gives the correct answer. These expressions are left associative. But exponential power is an exception: `((x^2)^3)` = `x^6`, but  `(x^(2^3))` = `x^8`. For this operator right association is the correct convention.
+For most arithmetic operators starting from the left and going step by step to the right gives the correct answer. These expressions are left associative. But exponential power is an exception: `(x^(2^3))` = `x^8`, not `((x^2)^3)` = `x^6`. For this operator right association is the correct convention.
 
 ##  Binding Power
 
@@ -28,7 +28,7 @@ Let's assume that the `-` operator has a binding power of say 2 to the left and 
 
 The `+` operator can be given the same binding power as the `-` because both these operators associate to the left, and they can be mixed and matched in an expression: `1+2-3+4 => (((1+2)-3)+4)`.
 
-The `*` and `/` operators also associate left to right, but they need a higher binding power than the `+` and `-`. They bibd their operands tighter than `+` or `-`.
+The `*` and `/` operators also associate left to right, but they need a higher binding power than the `+` and `-`. They bind their operands tighter than `+` or `-`.
 
 The exponential `^` operator binds its operands even tighter and associates to the right, so we can give it a binding power of say 6 to the right and 7 to the left. In the expression `x^2^3` the first `^` operator has a binding power of 6 to its right so it binds less tightly that the second `^` operator which has a binding power of 7 to its left, and we get a right association: `(x^(2^3))`.
 
@@ -61,7 +61,7 @@ In functional form this is:
 
          (+ (+ 1 (* 2 3)) 4)   or  +( +(1, *(2 3)), 4)
 
-The Lisp s-expresson functional form is a very convenient parse tree structure.
+The Lisp s-expression is a very convenient parse tree structure.
 
 If the input is: `1+2-3+4` then we can start building the parse tree like this:
 
@@ -120,7 +120,7 @@ The pattern for building a right hand tree is:
 
 This is more complicated than building the left tree because adding the next operator-operand pair needs to step down the right side. In this example it will always associate to the right with each sub-tree on the way down, because the right binding power of the sub-tree operator is less than the left binding power of the new operator.
 
-In general the new opearator needs to check if it should associate to the left or right of each sub-tree. A terminal operand will always have a lower right binding power than the left binding power of any new operator.
+In general the new operator needs to check if it should associate to the left or right of each sub-tree. A terminal operand will always have a lower right binding power than the left binding power of any new operator.
 
 To add a new operator-operand pair into a tree we must compare the right binding power of the operator at the root of the tree with the left binding power of the new operator. That determines if the tree should be built to the left or to the right.
 
@@ -149,7 +149,7 @@ A JavaScript program to add an operator-operand into a tree:
 
 The `bind_left` function compares the right binding power of the operator at the root of the tree with the `op` that is being added into the tree. The `build-tree` function then builds on the left or on the right.
 
-The amazing thing is that the core of the algorithm boils down to the three line `build_tree` function, everything else is straighforward book keeping.
+The amazing thing is that the core of the algorithm boils down to the three line `build_tree` function, everything else is straight forward book keeping.
 
 Building on the left:
 
@@ -176,13 +176,13 @@ To see the tree builder in action we need to drive it from a list of tokens. For
 
     console.log(tree); // [ '+', [ '+', '1', [ '*', '2', '3' ] ], '4' ]
 
-Lo and behold! we have a functional infix operator expression parser.
+Lo and behold! We have a functional infix operator expression parser.
 
 I find this tree building method easy to understand, but it is not quite as elegant as this next version. 
 
 ##  Pratt Algorithm
 
-Instead of building up the result parse tree by adding operator-operand pairs, a more elegant formaulation uses recursion inside a loop. This builds up the result tree on the call stack.
+Instead of building up the result parse tree by adding operator-operand pairs, a more elegant solution uses recursion inside a loop. This builds up the result tree on the call stack.
 
 Here is the code:
 
@@ -221,7 +221,7 @@ Here is the code:
 
     console.log(tree); // [ '+', [ '+', '1', [ '*', '2', '3' ] ], '4' ]
 
-The `pratt` function has an `lbp` paramater that is given the binding power (to the right) of the left operator (the previous operator).
+The `pratt` function has an `lbp` parameter that is given the binding power (to the right) of the left operator (the previous operator).
 
 If the next operator has a higher binding power (to its left) then the tree will be built to the right in a loop with recursion that sets the next `lbp` left operator binding power.
 
