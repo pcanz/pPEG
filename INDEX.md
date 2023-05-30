@@ -25,3 +25,7 @@ A Rust implementation: <https://github.com/pcanz/pPEGrs>
 ## C
 
 A C language implementation: <https://github.com/pcanz/pPEGc>
+
+## Haskell
+
+A Haskell implementation: <https://github.com/pcanz/pPEGhs>
