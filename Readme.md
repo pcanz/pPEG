@@ -298,7 +298,7 @@ Or in JSON format:
     ["add",[["num","1"],["mul",[["num","2"],["num","3"]]]]]
 ```
 Another example, parsing: `x^2^3-1`
-````
+```
     sub
     ├─pow
     │ ├─sym "x"
@@ -420,9 +420,9 @@ The pPEG grammar source text can contain any Unicode characters, but the charact
 A grammar text may be written in a quoted string with back-slash escape codes, or in a raw string without any escape codes, or as plain text in a file. Ideally the grammar text should not require any changes when ported between these different representations.
 
 For example, this rule for white-space can be used in any representation:
-
+```
     _ = [ \t\n\r]*
- 
+``` 
 If this rule is written in a programming language string with escape codes then pPEG will see the ASCII control code characters. If it is written in a plain text file then the pPEG compiler will see the escape codes and translate them into control code characters.
 
 The pPEG grammar does not rely on double-quote, back-tick, or back-slash characters for any grammar features. Using these characters in a grammar may require the grammar to be edited with escape codes when the grammar is ported into some programming language.
