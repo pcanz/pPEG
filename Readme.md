@@ -208,7 +208,7 @@ Here is the pPEG definition of itself:
     extn  = '<' ~'>'* '>'
     _     = ('#' ~[\n\r]* / [ \t\n\r]+)*
 ```
-This pPEG grammar is based on the original [PEG] as defined by Bryan Ford.
+This pPEG grammar is based on the original [PEG] as defined by Bryan Ford, for all the details see: [A Portable PEG].
 
 For simplicity and portability double quotes are not used. 
 
@@ -447,6 +447,7 @@ For more information see: [pPEG Documents...]
 [pPEGpy]: https://github.com/pcanz/pPEGpy
 [INDEX]: https://github.com/pcanz/pPEG/blob/master/INDEX.md
 [dingus]: https://pcanz.github.io/pPEGjs/dingus.html
+[A Portable PEG]: https://github.com/pcanz/pPEG/blob/master/docs/A-Portable-PEG.md
 [ANTLR]: https://www.antlr.org
 [RFC 4180]: https://www.ietf.org/rfc/rfc4180.txt
 [s-expressions]: https://en.wikipedia.org/wiki/S-expression
