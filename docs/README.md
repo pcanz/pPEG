@@ -1,10 +1,12 @@
 #   pPEG Documents
 
-To find out what pPEG is all about the palce to satrt is the [README] in the top level direcory.
+To find out what pPEG is all about the palce to start is the [README] in the top level direcory.
 
 Specific details for how to use pPEG implementations in different programming laanguages can be found in their own repositories with links form the [INDEX] in the top level directory.
 
 The collection of documents in this directory covers some generic pPEG topics in more detail and adds general background information.
+
+*   [A_Portable_PEG] explains how pPEG relates to the original [PEG].
 
 *   [Design_for_Simplicity] explains the pPEG design philosophy in contrast to other grammar parsers.
 
@@ -24,4 +26,6 @@ The collection of documents in this directory covers some generic pPEG topics in
 [Operator-Expressions]: https://github.com/pcanz/pPEG/blob/master/docs/operator-expressions.md
 [Pratt-Parsing]: https://github.com/pcanz/pPEG/blob/master/docs/PrattParsing.md
 [pPEG-Machine]: https://github.com/pcanz/pPEG/blob/master/docs/pPEG-machine.md
+[A_Portable_PEG]: https://github.com/pcanz/pPEG/blob/master/docs/A-Portable-PEG.md
+[PEG]: https://bford.info/pub/lang/peg.pdf
 
