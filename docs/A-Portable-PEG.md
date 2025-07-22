@@ -213,8 +213,8 @@ Peg     = _ rule+
 rule    = id _ '=' _ alt
 alt     = seq ('/'_ seq)*
 seq     = rep+
-rep     = pre sfx?
-pre     = pfx? prime _
+rep     = pre sfx? _
+pre     = pfx? prime
 pfx     = [~!&]
 sfx     = [*+?]
 prime   = call / literal / class / group
