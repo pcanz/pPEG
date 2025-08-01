@@ -181,32 +181,41 @@ In pPEG the backslash character can not be used to escape itself (and this is ne
 
 ##  The pPEG Grammar Grammar
 
-Here is the pPEG definition of itself:
+Here is a pPEG definition of itself:
 ```
-    Peg   = _ rule+ _
-    rule  = id _ def _ alt
-    def   = [=:]+
+Peg    = _ rule+
+rule   = id _ def _ alt
+def    = '=' ':'? / ':' '='?
+alt    = seq ('/'_ seq)*
+seq    = rep+
+rep    = pre sfx? _
+pre    = pfx? prime
 
-    alt   = seq ('/'_ seq)*
-    seq   = rep*
-    rep   = pre sfx? _
-    pre   = pfx? term
-    term  = call / sq / chs / dot / group / extn
+pfx    = [~!&]
+sfx    = [+?] / '*' nums?
+nums   = min ('..' max)?
+min    = [0-9]+
+max    = [0-9]
+
+prime  = call / quote / class / group / extn
+call   = id _ !def
+group  = '('_ alt ')'
+id     = [a-zA-Z_] [a-zA-Z0-9_-]*
  
-    group = '('_ alt ')'
-    pfx   = [&!~]
-    sfx   = [+?] / '*' range?
-    range = num (dots num?)?
-    num   = [0-9]+
-    dots  = '..'
-    dot   = '.'
+quote  = ['] (!['] char)* ['] 'i'?
+class  = '[' range* ']' / dot
+range  = !']' char ('-' !']' char)?
+dot    = '.'
 
-    call  = id _ !def
-    id    = [a-zA-Z_] [a-zA-Z0-9_-]*
-    sq    = ['] ~[']* ['] 'i'?
-    chs   = '[' ~']'* ']'
-    extn  = '<' ~'>'* '>'
-    _     = ('#' ~[\n\r]* / [ \t\n\r]+)*
+char   = '\' esc / .
+esc    = [tnr] / 'x' hex*2 / 'u' hex*4 / 'U' hex*8
+hex    = [0-9a-fA-F]
+ 
+extn   = '<' ~'>'* '>'
+
+_      : (SPACE / COMMENT)*
+SPACE  : [ \t\n\r]+
+COMMENT: '#' ~[\n\r]*
 ```
 This pPEG grammar is based on the original [PEG] as defined by Bryan Ford, for all the details see: [A Portable PEG].
 
@@ -343,7 +352,7 @@ A pPEG JSON parser is a useful example since JSON is so widely known and has a w
     memb   = Str _ ':' _ value
     Arr    = '['_ (value (','_ value)*)? ']'
     Str    = '"' chars* '"'
-    chars  = ~(_00-1F / '"' / '\')+ / '\' esc
+    chars  = ~[\x00-\x1F"\]+ / '\' esc
     esc    = ["\/bfnrt] / 'u' [0-9a-fA-F]*4
     val    = 'true' / 'false' / 'null'
     num    = int frac? exp?

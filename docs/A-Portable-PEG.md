@@ -205,70 +205,95 @@ The new PEG grammar language goes beyond the original PEG to defines how a parse
 Before we add any new features we will modify the original core grammar slightly to take account of issues that arose from the discussion of new features:
 
 * The prefix operators have precedence over the repeat suffix operators.
-*  Escape codes are used for the whitespace control code characters.
+* Escape codes are used for the whitespace control code characters.
 
 This core grammar is as simple as possible, just sufficient to define itself. It can be used as a bootstrap for the full pPEG grammar.
 ```
-Peg     = _ rule+
-rule    = id _ '=' _ alt
-alt     = seq ('/'_ seq)*
-seq     = rep+
-rep     = pre sfx? _
-pre     = pfx? prime
-pfx     = [~!&]
-sfx     = [*+?]
-prime   = call / literal / class / group
-group   = '('_ alt ')'
-call    = id _ !'='
-id      = [a-zA-Z_]+
-literal = ['] ~[']* [']
-class   = '[' range* ']'
-range   = ~']' ('-' ~']')?
-_       = [ \t\n\r]*
+Peg   = _ rule+
+rule  = id _ '=' _ alt
+alt   = seq ('/'_ seq)*
+seq   = rep+
+rep   = pre sfx? _
+pre   = pfx? prime
+pfx   = [~!&]
+sfx   = [*+?]
+prime = call / quote / class / group
+group = '('_ alt ')'
+call  = id _ !'='
+id    = [a-zA-Z_]+
+quote = ['] ~[']* [']
+class = '[' ~']'* ']'
+_     = [ \t\n\r]*
 ```
 
 This full pPEG grammar adds all the new features:
 ```
-Peg     = _ rule+
-rule    = id _ def _ alt
-def     = [=:]+
-alt     = seq ('/'_ seq)*
-seq     = rep+
-rep     = pre sfx? _
-pre     = pfx? prime
+Peg    = _ rule+
+rule   = id _ def _ alt
+def    = '=' ':'? / ':' '='?
+alt    = seq ('/'_ seq)*
+seq    = rep+
+rep    = pre sfx? _
+pre    = pfx? prime
 
-pfx     = [~!&]
-sfx     = [+?] / '*' nums?
-nums    = min ('..' max)?
-min     = [0-9]+
-max     = [0-9]*
+pfx    = [~!&]
+sfx    = [+?] / '*' nums?
+nums   = min ('..' max)?
+min    = [0-9]+
+max    = [0-9]
 
-prime   = call / literal / class / group / extn
-call    = id _ !def
-group   = '('_ alt ')'
+prime  = call / quote / class / group / extn
+call   = id _ !def
+group  = '('_ alt ')'
+id     = [a-zA-Z_] [a-zA-Z0-9_-]*
+ 
+quote  = ['] (!['] char)* ['] 'i'?
+class  = '[' range* ']' / dot
+range  = !']' char ('-' !']' char)?
+dot    = '.'
 
-id      = [a-zA-Z_] [a-zA-Z0-9_]*
-literal = ['] (!['] char)* ['] 'i'?
-class   = '[' range* ']' / dot
-range   = !']' char ('-' !']' char)?
-dot     = '.'
+char   = '\' esc / .
+esc    = [tnr] / 'x' hex*2 / 'u' hex*4 / 'U' hex*8
+hex    = [0-9a-fA-F]
+ 
+extn   = '<' ~'>'* '>'
 
-char    = '\' esc / any
-esc     = [tnr] / 'u' hex*4 / 'U' hex*8
-hex     = [0-9a-fA-F]
-any     = ~[]
-
-extn    = '<' ~'>'* '>'
-
-_       : (SPACE / COMMENT)*
-SPACE   : [ \t\n\r]
-COMMENT : '#' ~[\n\r]*
+_      : (SPACE / COMMENT)*
+SPACE  : [ \t\n\r]+
+COMMENT: '#' ~[\n\r]*
 ```
-The escape codes are defined and used in this self defining grammar. A parser may use a simplified version of this grammar by deleting the specification of the escape codes. The `char` rule can simply match any Unicode character.
+The escape codes are defined and used in this self defining grammar.
 
-The definition of the `.` symbol to match *any* character is no longer necessary, but it is retained for compatibility with the original PEG.
+The definition of the `.` symbol is no longer essential, `~[]` could be used, but the dot is retained for compatibility with the original PEG.
 
-The last three rules (from `_` on) are defined with `:`  as anonymous literal matches that will not appear in the parse tree.  A parser for a traditional grammar has an lexical token pre-pass that can perform a similar task.
+The last three rules (from `_` on) are defined with `:`  as anonymous literal matches that will not appear in the parse tree.  A parser for a traditional grammar would use an lexical token pre-pass to perform a similar task.
+
+Although this `Peg` grammar is a good self defining specification, in practice a parser may use a simpler version that the core grammar can bootstrap. The escape codes do not need to be explicit in the grammar, and the `char` rule can simply match any Unicode character.
+
+The core grammar can bootstrap this pragmatic parser grammar:
+```
+Peg   = _ rule+
+rule  = id _ def _ alt
+def   = '=' ':'? / ':' '='?
+alt   = seq ('/' _ seq)*
+seq   = rep+
+rep   = pre sfx? _
+pre   = pfx? term
+term  = call / quote / class / dot / group / extn
+group = '(' _ alt ')'
+call  = id _ !def
+id    = [a-zA-Z_] [a-zA-Z0-9_-]*
+pfx   = [~!&]
+sfx   = [+?] / '*' nums?
+nums  = min ('..' max)?
+min   = [0-9]+
+max   = [0-9]*
+quote = ['] ~[']* ['] 'i'?
+class = '[' ~']'* ']'
+dot   = '.'
+extn  = '<' ~'>'* '>'
+_     = ([ \t\n\r]+ / '#' ~[\n\r]*)*
+```
 
 ## Conclusion
 
