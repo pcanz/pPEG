@@ -240,7 +240,7 @@ pfx    = [~!&]
 sfx    = [+?] / '*' nums?
 nums   = min ('..' max)?
 min    = [0-9]+
-max    = [0-9]
+max    = [0-9]*
 
 prime  = call / quote / class / group / extn
 call   = id _ !def
