@@ -183,41 +183,29 @@ In pPEG the backslash character can not be used to escape itself (and this is ne
 
 Here is a pPEG definition of itself:
 ```
-Peg    = _ rule+
-rule   = id _ def _ alt
-def    = '=' ':'? / ':' '='?
-alt    = seq ('/'_ seq)*
-seq    = rep+
-rep    = pre sfx? _
-pre    = pfx? prime
-
-pfx    = [~!&]
-sfx    = [+?] / '*' nums?
-nums   = min ('..' max)?
-min    = [0-9]+
-max    = [0-9]*
-
-prime  = call / quote / class / group / extn
-call   = id _ !def
-group  = '('_ alt ')'
-id     = [a-zA-Z_] [a-zA-Z0-9_-]*
- 
-quote  = ['] (!['] char)* ['] 'i'?
-class  = '[' range* ']' / dot
-range  = !']' char ('-' !']' char)?
-dot    = '.'
-
-char   = '\' esc / .
-esc    = [tnr] / 'x' hex*2 / 'u' hex*4 / 'U' hex*8
-hex    = [0-9a-fA-F]
- 
-extn   = '<' ~'>'* '>'
-
-_      : (SPACE / COMMENT)*
-SPACE  : [ \t\n\r]+
-COMMENT: '#' ~[\n\r]*
+Peg   = _ rule+
+rule  = id _ def _ alt
+def   = '=' ':'? / ':' '='?
+alt   = seq ('/' _ seq)*
+seq   = rep+
+rep   = pre sfx? _
+pre   = pfx? term
+term  = call / quote / class / dot / group / extn
+group = '(' _ alt ')'
+call  = id _ !def
+id    = [a-zA-Z_] [a-zA-Z0-9_-]*
+pfx   = [~!&]
+sfx   = [+?] / '*' nums?
+nums  = min ('..' max)?
+min   = [0-9]+
+max   = [0-9]*
+quote = ['] ~[']* ['] 'i'?
+class = '[' ~']'* ']'
+dot   = '.'
+extn  = '<' ~'>'* '>'
+_     = ([ \t\n\r]+ / '#' ~[\n\r]*)*
 ```
-This pPEG grammar is based on the original [PEG] as defined by Bryan Ford, for all the details see: [A Portable PEG].
+This grammar defines a parser, for a more formal specification see: [A Portable PEG].
 
 For simplicity and portability double quotes are not used. 
 
@@ -234,6 +222,8 @@ Rule definitions can be modified to refine the parse tree without changing the s
 - A rule using `:=` will appear in the parse tree as a parent node, regardless of the number of children. Or use a rule name that starts with a capital letter.
 
 - A rule using `=:` will appear as a leaf node (if ever needed). 
+
+For the full details of how pPEG is derived from the original [PEG] defined by Bryan Ford, see: [A Portable PEG].
 
 
 ##  The Parse Tree
